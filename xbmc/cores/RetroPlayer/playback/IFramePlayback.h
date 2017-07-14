@@ -20,33 +20,35 @@
 #pragma once
 
 #include <stdint.h>
-#include <string>
 
 namespace KODI
 {
 namespace RETRO
 {
-  class IPlayback
+  class IFramePlayback
   {
   public:
-    virtual ~IPlayback() = default;
+    virtual ~IFramePlayback() = default;
 
-    // Playback capabilities
-    virtual bool CanPause() const = 0;
-    virtual bool CanSeek() const = 0;
+    /*!
+     * \brief Past frame count
+     */
+    virtual uint64_t PastFramesAvailable() const = 0;
 
-    // Control playback
-    virtual void PauseUnpause() = 0;
-    virtual unsigned int GetTimeMs() const = 0;
-    virtual unsigned int GetTotalTimeMs() const = 0;
-    virtual unsigned int GetCacheTimeMs() const = 0;
-    virtual void SeekTimeMs(unsigned int timeMs) = 0;
-    virtual double GetSpeed() const = 0;
-    virtual void SetSpeed(double speedFactor) = 0;
+    /*!
+     * \brief Future frame count
+     */
+    virtual uint64_t FutureFramesAvailable() const = 0;
 
-    // Savestates
-    virtual std::string CreateSavestate() = 0; // Returns the path of savestate on success
-    virtual bool LoadSavestate(const std::string& path) = 0;
+    virtual bool HasCurrentFrame() const = 0;
+
+    virtual uint64_t MaxFrameCount() const = 0;
+
+    virtual void SeekFrame(int64_t offsetFrames) = 0;
+
+    virtual void SetMaxFrameCount(uint64_t frameCount) = 0;
+
+    virtual void FrameEvent() = 0;
   };
 }
 }

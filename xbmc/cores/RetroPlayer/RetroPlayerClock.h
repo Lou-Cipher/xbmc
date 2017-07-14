@@ -25,27 +25,12 @@ namespace KODI
 {
 namespace RETRO
 {
-  class IRetroPlayerClockCallback
-  {
-  public:
-    virtual ~IRetroPlayerClockCallback() = default;
-
-    /*!
-     * \brief The next frame is being shown
-     */
-    virtual void FrameEvent() = 0;
-  };
-
-  class CRetroPlayerEnvironment : public IRetroPlayerClockCallback
-  {
-  public:
-    ~CRetroPlayerEnvironment() override = default;
-  };
+  class ITimePlayback;
 
   class CRetroPlayerClock : protected CThread
   {
   public:
-    CRetroPlayerClock(IRetroPlayerClockCallback *callback, double fps);
+    CRetroPlayerClock(ITimePlayback *callback, double fps);
 
     ~CRetroPlayerClock() override;
 
@@ -53,7 +38,7 @@ namespace RETRO
     void Stop();
 
     void SetSpeed(double speed);
-    double GetSpeed() const { return m_speedFactor; }
+    double GetSpeed() const;
 
   protected:
     // implementation of CThread
@@ -66,7 +51,7 @@ namespace RETRO
     double NowMs() const;
 
     // Construction parameters
-    IRetroPlayerClockCallback *const m_callback;
+    ITimePlayback *const m_callback;
     const double m_fps;
 
     // Timing parameters

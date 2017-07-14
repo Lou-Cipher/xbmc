@@ -19,29 +19,23 @@
  */
 #pragma once
 
-#include "IPlayback.h"
+#include "ITimePlayback.h"
 
 namespace KODI
 {
 namespace RETRO
 {
-  class CRealtimePlayback : public IPlayback
+  class CRealtimePlayback : public ITimePlayback
   {
   public:
     virtual ~CRealtimePlayback() = default;
 
-    // implementation of IPlayback
-    virtual bool CanPause() const override { return false; }
-    virtual bool CanSeek() const override { return false; }
-    virtual void PauseUnpause() override { }
-    virtual unsigned int GetTimeMs() const override { return 0; }
-    virtual unsigned int GetTotalTimeMs() const override { return 0; }
-    virtual unsigned int GetCacheTimeMs() const override { return 0; }
-    virtual void SeekTimeMs(unsigned int timeMs) override { }
-    virtual double GetSpeed() const override { return 1.0; }
-    virtual void SetSpeed(double speedFactor) override { }
-    virtual std::string CreateSavestate() override { return ""; }
-    virtual bool LoadSavestate(const std::string& path) override { return false; }
+    // implementation of ITimePlayback
+    uint64_t GetTimeMs() const override { return 0; }
+    uint64_t GetTotalTimeMs() const override { return 0; }
+    uint64_t GetCacheTimeMs() const override { return 0; }
+    void SeekTimeMs(uint64_t timeMs) override { }
+    void FrameEvent(double speed) override { }
   };
 }
 }

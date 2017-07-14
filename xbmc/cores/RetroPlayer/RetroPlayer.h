@@ -39,6 +39,7 @@ namespace RETRO
   class CRetroPlayerAutoSave;
   class CRetroPlayerClock;
   class CRetroPlayerVideo;
+  class ITimePlayback;
 
   class CRetroPlayer : public IPlayer,
                        public IRenderMsg
@@ -173,8 +174,9 @@ namespace RETRO
     CDVDClock                          m_dvdClock;
     CRenderManager                     m_renderManager;
     std::unique_ptr<CProcessInfo>      m_processInfo;
-    std::unique_ptr<CRetroPlayerClock> m_clock;
     std::unique_ptr<CEnvironment>      m_environment;
+    std::unique_ptr<CRetroPlayerClock> m_clock;
+    std::unique_ptr<ITimePlayback>     m_playback;
     std::unique_ptr<CRetroPlayerAudio> m_audio;
     std::unique_ptr<CRetroPlayerVideo> m_video;
     std::unique_ptr<CRetroPlayerAutoSave> m_autoSave;

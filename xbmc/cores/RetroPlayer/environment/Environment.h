@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include "cores/RetroPlayer/playback/IFramePlayback.h"
 #include "cores/RetroPlayer/RetroPlayerClock.h"
 
 #include <memory>
@@ -26,6 +27,11 @@
 
 namespace KODI
 {
+namespace GAME
+{
+  class CGameClient;
+}
+
 namespace RETRO
 {
   class CAction;
@@ -33,17 +39,21 @@ namespace RETRO
   class CReward;
   class CState;
 
-  class CEnvironment : public IRetroPlayerClockCallback
+  class CEnvironment : public IFramePlayback
   {
   public:
     CEnvironment(GAME::CGameClient &gameClient);
 
     ~CEnvironment() override;
 
-    // Implementation of IRetroPlayerClockCallback
+    // Implementation of IFramePlayback
+    uint64_t PastFramesAvailable() const override;
+    uint64_t FutureFramesAvailable() const override;
+    bool HasCurrentFrame() const override;
+    uint64_t MaxFrameCount() const override;
+    void SeekFrame(int64_t offsetFrames) override;
+    void SetMaxFrameCount(uint64_t frameCount) override;
     void FrameEvent() override;
-
-    //void Seek(int64_t relativeFrameCount) { m_relativeFrameSeek = relativeFrameCount; }
 
   private:
     // Environment functions

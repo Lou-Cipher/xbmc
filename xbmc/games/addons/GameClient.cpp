@@ -32,8 +32,6 @@
 #include "dialogs/GUIDialogOK.h"
 #include "filesystem/Directory.h"
 #include "filesystem/SpecialProtocol.h"
-#include "games/addons/playback/GameClientRealtimePlayback.h"
-#include "games/addons/playback/GameClientReversiblePlayback.h"
 #include "games/controllers/Controller.h"
 #include "games/ports/PortManager.h"
 #include "games/GameServices.h"
@@ -167,8 +165,6 @@ CGameClient::CGameClient(ADDON::CAddonInfo addonInfo) :
   it = extraInfo.find(GAME_PROPERTY_SUPPORTS_MOUSE);
   if (it != extraInfo.end())
     m_bSupportsMouse = (it->second == "true");
-
-  ResetPlayback();
 }
 
 CGameClient::~CGameClient(void)
@@ -330,6 +326,8 @@ bool CGameClient::OpenStandalone(IGameAudioCallback* audio, IGameVideoCallback* 
 
 bool CGameClient::InitializeGameplay(const std::string& gamePath, IGameAudioCallback* audio, IGameVideoCallback* video)
 {
+  m_bRequiresGameLoop = m_struct.toAddon.RequiresGameLoop();
+
   if (LoadGameInfo())
   {
     m_bIsPlaying      = true;
@@ -347,9 +345,6 @@ bool CGameClient::InitializeGameplay(const std::string& gamePath, IGameAudioCall
 
     m_inGameSaves.reset(new CGameClientInGameSaves(this, &m_struct.toAddon));
     m_inGameSaves->Load();
-
-    // Start playback
-    CreatePlayback();
 
     return true;
   }
@@ -438,47 +433,19 @@ std::string CGameClient::GetMissingResource()
   return strAddonId;
 }
 
-void CGameClient::CreatePlayback()
-{
-  bool bRequiresGameLoop = false;
-
-  try { bRequiresGameLoop = m_struct.toAddon.RequiresGameLoop(); }
-  catch (...) { LogException("RequiresGameLoop()"); }
-
-  if (bRequiresGameLoop)
-  {
-    m_playback.reset(new CGameClientReversiblePlayback(this, GetFrameRate(), m_serializeSize));
-  }
-  else
-  {
-    ResetPlayback();
-  }
-}
-
-void CGameClient::ResetPlayback()
-{
-  m_playback.reset(new CGameClientRealtimePlayback);
-}
-
 void CGameClient::Reset(unsigned int port)
 {
-  ResetPlayback();
-
   CSingleLock lock(m_critSection);
 
   if (m_bIsPlaying)
   {
     try { LogError(m_struct.toAddon.Reset(), "Reset()"); }
     catch (...) { LogException("Reset()"); }
-
-    CreatePlayback();
   }
 }
 
 void CGameClient::CloseFile()
 {
-  ResetPlayback();
-
   CSingleLock lock(m_critSection);
 
   if (m_bIsPlaying)
@@ -500,6 +467,7 @@ void CGameClient::CloseFile()
   if (m_bSupportsMouse)
     CloseMouse();
 
+  m_bRequiresGameLoop = false;
   m_bIsPlaying = false;
   m_gamePath.clear();
   m_serializeSize = 0;

@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "IPlayback.h"
+#include "ITimePlayback.h"
 #include "threads/CriticalSection.h"
 #include "utils/Observer.h"
 
@@ -31,59 +31,40 @@ namespace KODI
 {
 namespace RETRO
 {
-  class CGameClient;
-  class CSavestateReader;
-  class CSavestateWriter;
-  class IMemoryStream;
+  class IFramePlayback;
 
-  class CReversiblePlayback : public IPlayback,
-                              public RETRO::IRetroPlayerClockCallback,
+  class CReversiblePlayback : public ITimePlayback,
                               public Observer
   {
   public:
-    CReversiblePlayback(CGameClient* gameClient, double fps, size_t serializeSize);
+    CReversiblePlayback(IFramePlayback* framePlayback, double fps);
 
     virtual ~CReversiblePlayback();
 
-    // implementation of IGameClientPlayback
-    virtual bool CanPause() const override               { return true; }
-    virtual bool CanSeek() const override                { return true; }
-    virtual unsigned int GetTimeMs() const override      { return m_playTimeMs; }
-    virtual unsigned int GetTotalTimeMs() const override { return m_totalTimeMs; }
-    virtual unsigned int GetCacheTimeMs() const override { return m_cacheTimeMs; }
-    virtual void SeekTimeMs(unsigned int timeMs) override;
-    virtual double GetSpeed() const override;
-    virtual void SetSpeed(double speedFactor) override;
-    virtual std::string CreateSavestate() override;
-    virtual bool LoadSavestate(const std::string& path) override;
-
-    // implementation of IGameLoopCallback
-    virtual void FrameEvent() override;
-    virtual void RewindEvent() override;
+    // implementation of ITimePlayback
+    uint64_t GetTimeMs() const override      { return m_playTimeMs; }
+    uint64_t GetTotalTimeMs() const override { return m_totalTimeMs; }
+    uint64_t GetCacheTimeMs() const override { return m_cacheTimeMs; }
+    void SeekTimeMs(uint64_t timeMs) override;
+    void FrameEvent(double speed) override;
 
     // implementation of Observer
-    virtual void Notify(const Observable &obs, const ObservableMessage msg) override;
+    void Notify(const Observable &obs, const ObservableMessage msg) override;
 
   private:
-    void AddFrame();
-    void RewindFrames(unsigned int frames);
-    void AdvanceFrames(unsigned int frames);
     void UpdatePlaybackStats();
+    void ResizeFramePlayback();
 
     // Construction parameter
-    CGameClient* const m_gameClient;
-
-    // Savestate functionality
-    std::unique_ptr<CSavestateWriter> m_savestateWriter;
-    std::unique_ptr<CSavestateReader> m_savestateReader;
+    IFramePlayback *const m_framePlayback;
+    const double m_fps;
 
     // Playback stats
-    uint64_t     m_totalFrameCount;
-    unsigned int m_pastFrameCount;
-    unsigned int m_futureFrameCount;
-    unsigned int m_playTimeMs;
-    unsigned int m_totalTimeMs;
-    unsigned int m_cacheTimeMs;
+    uint64_t m_playTimeMs = 0;
+    uint64_t m_totalTimeMs = 0;
+    uint64_t m_cacheTimeMs = 0;
+
+    CCriticalSection m_mutex;
   };
 }
 }

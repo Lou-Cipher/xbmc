@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2017 Team Kodi
+ *      Copyright (C) 2016-2017 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,43 +19,28 @@
  */
 #pragma once
 
-namespace RETROPLAYER
+#include <stdint.h>
+
+namespace KODI
 {
-  class CStateCallback
+namespace RETRO
+{
+  class ITimePlayback
   {
   public:
-    virtual ~CStateCallback() = default;
+    virtual ~ITimePlayback() = default;
+
+    virtual uint64_t GetTimeMs() const = 0;
+    virtual uint64_t GetTotalTimeMs() const = 0;
+    virtual uint64_t GetCacheTimeMs() const = 0;
+    virtual void SeekTimeMs(uint64_t timeMs) = 0;
+
+    /*!
+     * \brief The next frame is being shown
+     *
+     * \param speed The current clock speed
+     */
+    virtual void FrameEvent(double speed) = 0;
   };
-
-  class CRewardCallback
-  {
-  public:
-    virtual ~CRewardCallback() = default;
-  };
-
-  class CGoalCallback
-  {
-  public:
-    virtual ~CGoalCallback() = default;
-  };
-
-  struct CControllerInput
-  {
-
-  };
-
-
-
-  struct Actions
-  {
-    std::vector<>
-  };
-
-  class CActionCallback
-  {
-  public:
-    virtual ~CActionCallback() = default;
-
-    virtual void GetInput()
-  };
+}
 }

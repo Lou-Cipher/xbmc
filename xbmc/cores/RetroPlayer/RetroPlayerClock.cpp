@@ -19,6 +19,7 @@
  */
 
 #include "RetroPlayerClock.h"
+#include "cores/RetroPlayer/playback/ITimePlayback.h"
 #include "threads/SingleLock.h"
 
 #include <cmath>
@@ -29,7 +30,7 @@ using namespace RETRO;
 #define DEFAULT_FPS     60  // In case fps is 0 (shouldn't happen)
 #define FOREVER_MS      (7 * 24 * 60 * 60 * 1000) // 1 week is large enough
 
-CRetroPlayerClock::CRetroPlayerClock(IRetroPlayerClockCallback *callback, double fps) :
+CRetroPlayerClock::CRetroPlayerClock(ITimePlayback *callback, double fps) :
   CThread("RetroPlayerClock"),
   m_callback(callback),
   m_fps(fps > 0.0 ? fps : DEFAULT_FPS)
@@ -63,6 +64,12 @@ void CRetroPlayerClock::SetSpeed(double speedFactor)
   m_sleepEvent.Set();
 }
 
+double CRetroPlayerClock::GetSpeed() const
+{
+  CSingleLock lock(m_mutex);
+  return m_speedFactor;
+}
+
 void CRetroPlayerClock::Process()
 {
   CSingleLock lock(m_mutex);
@@ -71,9 +78,11 @@ void CRetroPlayerClock::Process()
 
   while (!m_bStop)
   {
+    double speedFactor = m_speedFactor;
+
     {
       CSingleExit exit(m_mutex);
-      m_callback->FrameEvent();
+      m_callback->FrameEvent(speedFactor);
     }
 
     // Record frame time
