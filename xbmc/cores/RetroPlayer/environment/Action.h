@@ -21,7 +21,9 @@
 
 #include <stdint.h>
 
-namespace RETROPLAYER
+namespace KODI
+{
+namespace RETRO
 {
   class CGoal;
   class CEnvironment;
@@ -35,4 +37,5 @@ namespace RETROPLAYER
 
     void Update(uint64_t timestamp, const CState& state, const CReward& reward, const CGoal& goal);
   };
+}
 }

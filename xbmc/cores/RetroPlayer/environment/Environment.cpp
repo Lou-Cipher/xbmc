@@ -27,81 +27,55 @@
 
 #include <cmath>
 
-using namespace RETROPLAYER;
+using namespace KODI;
+using namespace RETRO;
 
 #define FOREVER_MS   (7 * 24 * 60 * 60 * 1000) // 1 week is large enough
 
-CEnvironment::CEnvironment() :
-  CThread("RetroPlayer Environment"),
+CEnvironment::CEnvironment(GAME::CGameClient &gameClient) :
+  m_gameClient(gameClient),
   m_state(new CState(this)),
   m_reward(new CReward(this)),
   m_goal(new CGoal(this)),
-  m_action(new CAction(this)),
-  m_speedFactor(0.0),
-  m_lastFrameMs(0.0)
+  m_action(new CAction(this))
 {
 }
 
-bool CEnvironment::Create()
-{
-  if (!IsRunning())
-  {
-    CThread::Create(false);
-    return true;
-  }
-  return false;
-}
+CEnvironment::~CEnvironment() = default;
 
-void CEnvironment::Destroy()
+void CEnvironment::FrameEvent()
 {
-  StopThread(true);
-}
+  //m_netplay.PreFrame();
 
-void CEnvironment::SetSpeed(double speedFactor)
-{
-  {
-    CSingleLock lock(m_mutex);
-    m_speedFactor = speedFactor;
-  }
-  m_sleepEvent.Set();
-}
-
-void CEnvironment::Process()
-{
   // Environment variables
-  uint64_t t = 0;
   CState& state = *m_state;
   CReward& reward = *m_reward;
   CGoal& goal = *m_goal;
   CAction& action = *m_action;
 
-  // Timing variables
-  double nextFrameMs = NowMs();
+  UpdateState(m_timestamp, state, reward, goal, action);
+  if (m_bStop)
+    return;
 
-  while (!m_bStop)
-  {
-    UpdateState(t, state, reward, goal, action);
-    if (m_bStop)
-      break;
+  UpdateReward(m_timestamp, state, reward, goal, action);
+  if (m_bStop)
+    return;
 
-    UpdateReward(t, state, reward, goal, action);
-    if (m_bStop)
-      break;
+  UpdateGoal(m_timestamp, state, reward, goal, action);
+  if (m_bStop)
+    return;
 
-    UpdateGoal(t, state, reward, goal, action);
-    if (m_bStop)
-      break;
+  //WaitForAction();
+  if (m_bStop)
+    return;
 
-    //WaitForAction();
-    if (m_bStop)
-      break;
+  UpdateAction(m_timestamp, state, reward, goal, action);
 
-    UpdateAction(t, state, reward, goal, action);
+  //! @todo Seek
 
-    //! @todo Seek
+  m_timestamp++;
 
-    t++;
-  }
+  //m_netplay.PostFrame();
 }
 
 // --- Environment functions ---------------------------------------------------
@@ -124,32 +98,4 @@ void CEnvironment::UpdateGoal(uint64_t t, const CState& state, const CReward& re
 void CEnvironment::UpdateAction(uint64_t t, const CState& state, const CReward& reward, const CGoal& goal, CAction& action)
 {
   action.Update(t, state, reward, goal);
-}
-
-// --- Timing functions --------------------------------------------------------
-
-double CEnvironment::FrameTimeMs() const
-{
-  const double fps = 60.0; //! @todo
-
-  if (m_speedFactor != 0.0)
-    return 1000.0 / fps / std::fabs(m_speedFactor);
-  else
-    return FOREVER_MS;
-}
-
-double CEnvironment::SleepTimeMs(double nowMs) const
-{
-  // Calculate next frame time
-  const double nextFrameMs = m_lastFrameMs + FrameTimeMs();
-
-  // Calculate sleep time
-  const double sleepTimeMs = nextFrameMs - nowMs;
-
-  return sleepTimeMs;
-}
-
-double CEnvironment::NowMs() const
-{
-  return static_cast<double>(XbmcThreads::SystemClockMillis());
 }

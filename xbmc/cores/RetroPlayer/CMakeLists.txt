@@ -2,6 +2,7 @@ set(SOURCES PixelConverter.cpp
             RetroPlayer.cpp
             RetroPlayerAudio.cpp
             RetroPlayerAutoSave.cpp
+            RetroPlayerClock.cpp
             RetroPlayerVideo.cpp)
 
 set(HEADERS IPixelConverter.h
@@ -9,6 +10,7 @@ set(HEADERS IPixelConverter.h
             RetroPlayer.h
             RetroPlayerAudio.h
             RetroPlayerAutoSave.h
+            RetroPlayerClock.h
             RetroPlayerDefines.h
             RetroPlayerVideo.h)
 

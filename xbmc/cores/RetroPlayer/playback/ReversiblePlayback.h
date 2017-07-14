@@ -19,8 +19,7 @@
  */
 #pragma once
 
-#include "IGameClientPlayback.h"
-#include "GameLoop.h"
+#include "IPlayback.h"
 #include "threads/CriticalSection.h"
 #include "utils/Observer.h"
 
@@ -30,26 +29,25 @@
 
 namespace KODI
 {
-namespace GAME
+namespace RETRO
 {
   class CGameClient;
   class CSavestateReader;
   class CSavestateWriter;
   class IMemoryStream;
 
-  class CGameClientReversiblePlayback : public IGameClientPlayback,
-                                        public IGameLoopCallback,
-                                        public Observer
+  class CReversiblePlayback : public IPlayback,
+                              public RETRO::IRetroPlayerClockCallback,
+                              public Observer
   {
   public:
-    CGameClientReversiblePlayback(CGameClient* gameClient, double fps, size_t serializeSize);
+    CReversiblePlayback(CGameClient* gameClient, double fps, size_t serializeSize);
 
-    virtual ~CGameClientReversiblePlayback();
+    virtual ~CReversiblePlayback();
 
     // implementation of IGameClientPlayback
     virtual bool CanPause() const override               { return true; }
     virtual bool CanSeek() const override                { return true; }
-    virtual void PauseUnpause() override;
     virtual unsigned int GetTimeMs() const override      { return m_playTimeMs; }
     virtual unsigned int GetTotalTimeMs() const override { return m_totalTimeMs; }
     virtual unsigned int GetCacheTimeMs() const override { return m_cacheTimeMs; }
@@ -71,15 +69,9 @@ namespace GAME
     void RewindFrames(unsigned int frames);
     void AdvanceFrames(unsigned int frames);
     void UpdatePlaybackStats();
-    void UpdateMemoryStream();
 
     // Construction parameter
     CGameClient* const m_gameClient;
-
-    // Gameplay functionality
-    CGameLoop                      m_gameLoop;
-    std::unique_ptr<IMemoryStream> m_memoryStream;
-    CCriticalSection               m_mutex;
 
     // Savestate functionality
     std::unique_ptr<CSavestateWriter> m_savestateWriter;

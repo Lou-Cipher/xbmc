@@ -21,9 +21,11 @@
 #include "RetroPlayer.h"
 #include "RetroPlayerAudio.h"
 #include "RetroPlayerAutoSave.h"
+#include "RetroPlayerAutoSave.h"
+#include "RetroPlayerClock.h"
 #include "RetroPlayerVideo.h"
 #include "addons/AddonManager.h"
-#include "cores/DataCacheCore.h"
+#include "cores/RetroPlayer/environment/Environment.h"
 #include "cores/VideoPlayer/Process/ProcessInfo.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "filesystem/File.h"
@@ -54,9 +56,11 @@ using namespace KODI;
 using namespace GAME;
 using namespace RETRO;
 
+#define REWIND_FACTOR  0.25  // Rewind at 25% of gameplay speed
+
 CRetroPlayer::CRetroPlayer(IPlayerCallback& callback) :
   IPlayer(callback),
-  m_renderManager(m_clock, this),
+  m_renderManager(m_dvdClock, this),
   m_processInfo(CProcessInfo::CreateInstance())
 {
 }
@@ -146,7 +150,9 @@ bool CRetroPlayer::OpenFile(const CFileItem& file, const CPlayerOptions& options
 
   if (bSuccess)
   {
-    SetSpeed(1);
+    m_environment.reset(new CEnvironment(*m_gameClient));
+    m_clock.reset(new CRetroPlayerClock(m_environment.get(), m_gameClient->GetFrameRate()));
+    m_clock->Start();
     m_callback.OnPlayBackStarted();
     m_autoSave.reset(new CRetroPlayerAutoSave(*m_gameClient));
   }
@@ -192,8 +198,8 @@ bool CRetroPlayer::IsPlaying() const
 
 bool CRetroPlayer::CanPause()
 {
-  if (m_gameClient)
-    return m_gameClient->GetPlayback()->CanPause();
+  if (m_environment)
+    return m_environment->GetPlayback()->CanPause();
   return false;
 }
 
@@ -202,20 +208,24 @@ void CRetroPlayer::Pause()
   if (!CanPause())
     return;
 
-  if (m_gameClient)
+  if (m_environment)
   {
-    m_gameClient->GetPlayback()->PauseUnpause();
-    m_audio->Enable(m_gameClient->GetPlayback()->GetSpeed() == 1.0);
+    if (m_clock->GetSpeed() == 0.0)
+      m_clock->SetSpeed(1.0);
+    else
+      m_clock->SetSpeed(0.0);
 
-    if (m_gameClient->GetPlayback()->GetSpeed() != 0.0)
+    m_audio->Enable(m_clock->GetSpeed() == 1.0);
+
+    if (m_clock->GetSpeed() != 0.0)
       CloseOSD();
   }
 }
 
 bool CRetroPlayer::CanSeek()
 {
-  if (m_gameClient)
-    return m_gameClient->GetPlayback()->CanSeek();
+  if (m_environment)
+    return m_environment->GetPlayback()->CanSeek();
   return false;
 }
 
@@ -226,7 +236,7 @@ void CRetroPlayer::Seek(bool bPlus /* = true */,
   if (!CanSeek())
     return;
 
-  if (m_gameClient)
+  if (m_environment)
   {
     //! @todo
     /*
@@ -265,10 +275,10 @@ void CRetroPlayer::SeekPercentage(float fPercent /* = 0 */)
 
 float CRetroPlayer::GetPercentage()
 {
-  if (m_gameClient)
+  if (m_environment)
   {
-    const float timeMs = static_cast<float>(m_gameClient->GetPlayback()->GetTimeMs());
-    const float totalMs = static_cast<float>(m_gameClient->GetPlayback()->GetTotalTimeMs());
+    const float timeMs = static_cast<float>(m_environment->GetPlayback()->GetTimeMs());
+    const float totalMs = static_cast<float>(m_environment->GetPlayback()->GetTotalTimeMs());
 
     if (totalMs != 0.0f)
       return timeMs / totalMs * 100.0f;
@@ -279,10 +289,10 @@ float CRetroPlayer::GetPercentage()
 
 float CRetroPlayer::GetCachePercentage()
 {
-  if (m_gameClient)
+  if (m_environment)
   {
-    const float cacheMs = static_cast<float>(m_gameClient->GetPlayback()->GetCacheTimeMs());
-    const float totalMs = static_cast<float>(m_gameClient->GetPlayback()->GetTotalTimeMs());
+    const float cacheMs = static_cast<float>(m_environment->GetPlayback()->GetCacheTimeMs());
+    const float totalMs = static_cast<float>(m_environment->GetPlayback()->GetTotalTimeMs());
 
     if (totalMs != 0.0f)
       return cacheMs / totalMs * 100.0f;
@@ -301,12 +311,12 @@ void CRetroPlayer::SeekTime(int64_t iTime /* = 0 */)
   if (!CanSeek())
     return;
 
-  if (m_gameClient)
+  if (m_environment)
   {
     m_gameClient->GetPlayback()->SeekTimeMs(static_cast<unsigned int>(iTime));
-    m_audio->Enable(m_gameClient->GetPlayback()->GetSpeed() == 1.0);
+    m_audio->Enable(m_environment->GetPlayback()->GetSpeed() == 1.0);
 
-    if (m_gameClient->GetPlayback()->GetSpeed() != 0.0)
+    if (m_environment->GetPlayback()->GetSpeed() != 0.0)
       CloseOSD();
   }
 }
@@ -323,15 +333,15 @@ bool CRetroPlayer::SeekTimeRelative(int64_t iTime)
 
 int64_t CRetroPlayer::GetTime()
 {
-  if (m_gameClient)
-    return m_gameClient->GetPlayback()->GetTimeMs();
+  if (m_environment)
+    return m_environment->GetPlayback()->GetTimeMs();
   return 0;
 }
 
 int64_t CRetroPlayer::GetTotalTime()
 {
-  if (m_gameClient)
-    return m_gameClient->GetPlayback()->GetTotalTimeMs();
+  if (m_environment)
+    return m_environment->GetPlayback()->GetTotalTimeMs();
   return 0;
 }
 
@@ -343,9 +353,12 @@ bool CRetroPlayer::GetStreamDetails(CStreamDetails &details)
 
 void CRetroPlayer::SetSpeed(float speed)
 {
-  if (m_gameClient)
+  if (m_clock)
   {
-    if (m_gameClient->GetPlayback()->GetSpeed() != speed)
+    if (speed < 0.0f)
+      speed *= REWIND_FACTOR;
+
+    if (m_clock->GetSpeed() != speed)
     {
       if (speed == 1.0f)
         m_callback.OnPlayBackResumed();
@@ -353,31 +366,29 @@ void CRetroPlayer::SetSpeed(float speed)
         m_callback.OnPlayBackPaused();
     }
 
-    m_gameClient->GetPlayback()->SetSpeed(speed);
-    m_audio->Enable(m_gameClient->GetPlayback()->GetSpeed() == 1.0);
+    m_clock->SetSpeed(speed);
+    m_audio->Enable(m_clock->GetSpeed() == 1.0);
 
-    if (m_gameClient->GetPlayback()->GetSpeed() != 0.0)
+    if (m_clock->GetSpeed() != 0.0)
       CloseOSD();
-
-    CDataCacheCore::GetInstance().SetSpeed(1.0, speed);
   }
 }
 
-bool CRetroPlayer::OnAction(const CAction &action)
+bool CRetroPlayer::OnAction(const ::CAction &action)
 {
   switch (action.GetID())
   {
   case ACTION_PLAYER_RESET:
   {
-    if (m_gameClient)
+    if (m_environment)
     {
-      double previousPlaySpeed = m_gameClient->GetPlayback()->GetSpeed();
-      m_gameClient->GetPlayback()->SetSpeed(0.0);
+      double previousPlaySpeed = m_clock->GetSpeed();
+      m_clock->SetSpeed(0.0);
       CServiceBroker::GetGameServices().PortManager().HardwareReset();
       if (previousPlaySpeed > 0.0)
-        m_gameClient->GetPlayback()->SetSpeed(previousPlaySpeed);
+        m_clock->SetSpeed(previousPlaySpeed);
       else
-        m_gameClient->GetPlayback()->SetSpeed(1.0f);
+        m_clock->SetSpeed(1.0f);
 
       CloseOSD();
     }

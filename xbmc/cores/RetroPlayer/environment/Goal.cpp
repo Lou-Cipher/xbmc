@@ -20,7 +20,8 @@
 
 #include "Goal.h"
 
-using namespace RETROPLAYER;
+using namespace KODI;
+using namespace RETRO;
 
 void CGoal::Update(uint64_t timestamp, const CState& state, const CReward& reward, const CAction& action)
 {

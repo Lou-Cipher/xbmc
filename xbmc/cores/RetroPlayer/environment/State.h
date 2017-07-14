@@ -21,7 +21,9 @@
 
 #include <stdint.h>
 
-namespace RETROPLAYER
+namespace KODI
+{
+namespace RETRO
 {
   class CAction;
   class CEnvironment;
@@ -40,4 +42,5 @@ namespace RETROPLAYER
 
     uint64_t m_timestamp;
   };
+}
 }

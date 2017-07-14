@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2016-2017 Team Kodi
+ *      Copyright (C) 2012-2017 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -18,45 +18,43 @@
  *
  */
 
-#include "GameLoop.h"
+#include "RetroPlayerClock.h"
 #include "threads/SingleLock.h"
-#include "threads/SystemClock.h"
 
 #include <cmath>
 
 using namespace KODI;
-using namespace GAME;
+using namespace RETRO;
 
-#define DEFAULT_FPS  60  // In case fps is 0 (shouldn't happen)
-#define FOREVER_MS   (7 * 24 * 60 * 60 * 1000) // 1 week is large enough
+#define DEFAULT_FPS     60  // In case fps is 0 (shouldn't happen)
+#define FOREVER_MS      (7 * 24 * 60 * 60 * 1000) // 1 week is large enough
 
-CGameLoop::CGameLoop(IGameLoopCallback* callback, double fps) :
-  CThread("GameLoop"),
+CRetroPlayerClock::CRetroPlayerClock(IRetroPlayerClockCallback *callback, double fps) :
+  CThread("RetroPlayerClock"),
   m_callback(callback),
-  m_fps(fps ? fps : DEFAULT_FPS),
-  m_speedFactor(0.0),
-  m_lastFrameMs(0.0)
+  m_fps(fps > 0.0 ? fps : DEFAULT_FPS)
 {
 }
 
-CGameLoop::~CGameLoop()
+CRetroPlayerClock::~CRetroPlayerClock()
 {
   Stop();
 }
 
-void CGameLoop::Start()
+void CRetroPlayerClock::Start()
 {
+  m_speedFactor = 1.0;
   Create();
 }
 
-void CGameLoop::Stop()
+void CRetroPlayerClock::Stop()
 {
   StopThread(false);
   m_sleepEvent.Set();
   StopThread(true);
 }
 
-void CGameLoop::SetSpeed(double speedFactor)
+void CRetroPlayerClock::SetSpeed(double speedFactor)
 {
   {
     CSingleLock lock(m_mutex);
@@ -65,29 +63,25 @@ void CGameLoop::SetSpeed(double speedFactor)
   m_sleepEvent.Set();
 }
 
-void CGameLoop::Process(void)
+void CRetroPlayerClock::Process()
 {
-  double nextFrameMs = NowMs();
-
   CSingleLock lock(m_mutex);
+
+  double nextFrameMs = NowMs();
 
   while (!m_bStop)
   {
-    double speedFactor = m_speedFactor;
-
     {
       CSingleExit exit(m_mutex);
-      if (speedFactor > 0.0)
-        m_callback->FrameEvent();
-      else if (speedFactor < 0.0)
-        m_callback->RewindEvent();
+      m_callback->FrameEvent();
     }
 
     // Record frame time
     m_lastFrameMs = nextFrameMs;
 
-    // Calculate sleep time
     double nowMs = NowMs();
+
+    // Calculate sleep time
     double sleepTimeMs = SleepTimeMs(nowMs);
 
     // Sleep at least 1 ms to avoid sleeping forever
@@ -115,7 +109,7 @@ void CGameLoop::Process(void)
   }
 }
 
-double CGameLoop::FrameTimeMs() const
+double CRetroPlayerClock::FrameTimeMs() const
 {
   if (m_speedFactor != 0.0)
     return 1000.0 / m_fps / std::abs(m_speedFactor);
@@ -123,7 +117,7 @@ double CGameLoop::FrameTimeMs() const
     return FOREVER_MS;
 }
 
-double CGameLoop::SleepTimeMs(double nowMs) const
+double CRetroPlayerClock::SleepTimeMs(double nowMs) const
 {
   // Calculate next frame time
   const double nextFrameMs = m_lastFrameMs + FrameTimeMs();
@@ -134,7 +128,7 @@ double CGameLoop::SleepTimeMs(double nowMs) const
   return sleepTimeMs;
 }
 
-double CGameLoop::NowMs() const
+double CRetroPlayerClock::NowMs() const
 {
   return static_cast<double>(XbmcThreads::SystemClockMillis());
 }

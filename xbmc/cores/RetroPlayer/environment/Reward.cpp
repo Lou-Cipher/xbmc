@@ -20,7 +20,8 @@
 
 #include "Reward.h"
 
-using namespace RETROPLAYER;
+using namespace KODI;
+using namespace RETRO;
 
 void CReward::Update(uint64_t timestamp, const CState& state, const CGoal& goal, const CAction& action)
 {

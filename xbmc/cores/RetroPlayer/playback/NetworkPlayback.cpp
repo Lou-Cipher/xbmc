@@ -29,9 +29,9 @@
 #include "games/GameSettings.h"
 #include "settings/Settings.h"
 #include "threads/SingleLock.h"
-#include "utils/MathUtils.h"
 
 #include <algorithm>
+#include <math.h>
 
 using namespace KODI;
 using namespace GAME;
@@ -40,7 +40,6 @@ using namespace GAME;
 
 CGameClientReversiblePlayback::CGameClientReversiblePlayback(CGameClient* gameClient, double fps, size_t serializeSize) :
   m_gameClient(gameClient),
-  m_gameLoop(this, fps),
   m_savestateWriter(new CSavestateWriter),
   m_savestateReader(new CSavestateReader),
   m_totalFrameCount(0),
@@ -53,38 +52,24 @@ CGameClientReversiblePlayback::CGameClientReversiblePlayback(CGameClient* gameCl
   UpdateMemoryStream();
 
   CGameSettings::GetInstance().RegisterObserver(this);
-
-  m_gameLoop.Start();
 }
 
 CGameClientReversiblePlayback::~CGameClientReversiblePlayback()
 {
   CGameSettings::GetInstance().UnregisterObserver(this);
-
-  m_gameLoop.Stop();
-}
-
-void CGameClientReversiblePlayback::PauseUnpause()
-{
-  if (GetSpeed() == 0.0)
-    m_gameLoop.SetSpeed(1.0);
-  else
-    m_gameLoop.SetSpeed(0.0);
 }
 
 void CGameClientReversiblePlayback::SeekTimeMs(unsigned int timeMs)
 {
   const int offsetTimeMs = timeMs - GetTimeMs();
-  const int offsetFrames = MathUtils::round_int(offsetTimeMs / 1000.0 * m_gameLoop.FPS());
+  const int offsetFrames = lrint(offsetTimeMs / 1000.0 * m_gameClient->GetFrameRate());
 
   if (offsetFrames > 0)
   {
     const unsigned int frames = std::min(static_cast<unsigned int>(offsetFrames), m_futureFrameCount);
     if (frames > 0)
     {
-      m_gameLoop.SetSpeed(0.0);
       AdvanceFrames(frames);
-      m_gameLoop.SetSpeed(1.0);
     }
   }
   else if (offsetFrames < 0)
@@ -92,24 +77,9 @@ void CGameClientReversiblePlayback::SeekTimeMs(unsigned int timeMs)
     const unsigned int frames = std::min(static_cast<unsigned int>(-offsetFrames), m_pastFrameCount);
     if (frames > 0)
     {
-      m_gameLoop.SetSpeed(0.0);
       RewindFrames(frames);
-      m_gameLoop.SetSpeed(1.0);
     }
   }
-}
-
-double CGameClientReversiblePlayback::GetSpeed() const
-{
-  return m_gameLoop.GetSpeed();
-}
-
-void CGameClientReversiblePlayback::SetSpeed(double speedFactor)
-{
-  if (speedFactor >= 0.0)
-    m_gameLoop.SetSpeed(speedFactor);
-  else
-    m_gameLoop.SetSpeed(speedFactor * REWIND_FACTOR);
 }
 
 std::string CGameClientReversiblePlayback::CreateSavestate()
@@ -281,9 +251,9 @@ void CGameClientReversiblePlayback::UpdatePlaybackStats()
   const unsigned int total = m_memoryStream->MaxFrameCount();
   const unsigned int cached = m_futureFrameCount;
 
-  m_playTimeMs = MathUtils::round_int(1000.0 * played / m_gameLoop.FPS());
-  m_totalTimeMs = MathUtils::round_int(1000.0 * total / m_gameLoop.FPS());
-  m_cacheTimeMs = MathUtils::round_int(1000.0 * cached / m_gameLoop.FPS());
+  m_playTimeMs = lrint(1000.0 * played / m_gameClient->GetFrameRate());
+  m_totalTimeMs = lrint(1000.0 * total / m_gameClient->GetFrameRate());
+  m_cacheTimeMs = lrint(1000.0 * cached / m_gameClient->GetFrameRate());
 }
 
 void CGameClientReversiblePlayback::Notify(const Observable &obs, const ObservableMessage msg)
@@ -313,7 +283,7 @@ void CGameClientReversiblePlayback::UpdateMemoryStream()
     if (rewindBufferSec < 10)
       rewindBufferSec = 10; // Sanity check
 
-    unsigned int frameCount = MathUtils::round_int(rewindBufferSec * m_gameLoop.FPS());
+    unsigned int frameCount = lrint(rewindBufferSec * m_gameClient->GetFrameRate());
 
     if (!m_memoryStream)
     {

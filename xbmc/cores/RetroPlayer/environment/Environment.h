@@ -19,53 +19,41 @@
  */
 #pragma once
 
-#include "threads/Thread.h"
+#include "cores/RetroPlayer/RetroPlayerClock.h"
 
 #include <memory>
 #include <stdint.h>
 
-namespace RETROPLAYER
+namespace KODI
+{
+namespace RETRO
 {
   class CAction;
   class CGoal;
   class CReward;
   class CState;
 
-  class CEnvironment : private CThread
+  class CEnvironment : public IRetroPlayerClockCallback
   {
   public:
-    CEnvironment();
+    CEnvironment(GAME::CGameClient &gameClient);
 
-    virtual ~CEnvironment() { Destroy(); }
+    ~CEnvironment() override;
 
-    bool Create();
-    void Destroy();
-
-    double GetSpeed() const { return m_speedFactor; }
-    void SetSpeed(double speedFactor);
-
-    //! @todo
-    bool GetState(uint64_t timestamp, CState& state) { return false; }
-    bool GetReward(uint64_t timestamp, CReward& reward) { return false; }
-    bool GetGoal(uint64_t timestamp, CGoal& goal) { return false; }
-    bool GetAction(uint64_t timestamp, CAction& action) { return false; }
+    // Implementation of IRetroPlayerClockCallback
+    void FrameEvent() override;
 
     //void Seek(int64_t relativeFrameCount) { m_relativeFrameSeek = relativeFrameCount; }
 
   private:
-    // implementation of CThread
-    virtual void Process() override;
-
     // Environment functions
     static void UpdateState( uint64_t t,       CState& state, const CReward& reward, const CGoal& goal, const CAction& action);
     static void UpdateReward(uint64_t t, const CState& state,       CReward& reward, const CGoal& goal, const CAction& action);
     static void UpdateGoal(  uint64_t t, const CState& state, const CReward& reward,       CGoal& goal, const CAction& action);
     static void UpdateAction(uint64_t t, const CState& state, const CReward& reward, const CGoal& goal,       CAction& action);
 
-    // Timing functions
-    double FrameTimeMs() const;
-    double SleepTimeMs(double nowMs) const;
-    double NowMs() const;
+    // Construction parameters
+    GAME::CGameClient &m_gameClient;
 
     // Environment variables
     std::unique_ptr<CState> m_state;
@@ -73,10 +61,8 @@ namespace RETROPLAYER
     std::unique_ptr<CGoal> m_goal;
     std::unique_ptr<CAction> m_action;
 
-    // Timing variables
-    double                   m_speedFactor;
-    double                   m_lastFrameMs;
-    CEvent                   m_sleepEvent;
-    CCriticalSection         m_mutex;
+    bool m_bStop = false;
+    uint64_t m_timestamp = 0;
   };
+}
 }

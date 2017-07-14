@@ -20,9 +20,9 @@
 #pragma once
 
 #include "GameClientProperties.h"
-#include "GameClientTiming.h"
 #include "addons/binary-addons/AddonDll.h"
 #include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
+#include "addons/Addon.h"
 #include "games/controllers/ControllerTypes.h"
 #include "games/GameTypes.h"
 #include "peripherals/EventScanRate.h"
@@ -85,11 +85,12 @@ public:
   void Reset(unsigned int port);
   void CloseFile();
   const std::string& GetGamePath() const { return m_gamePath; }
+  double GetFrameRate() const { return m_fps; }
+  double GetSampleRate() const { return m_sampleRate; }
 
   // Playback control
   bool IsPlaying() const { return m_bIsPlaying; }
   IGameClientPlayback* GetPlayback() { return m_playback.get(); }
-  const CGameClientTiming& Timing() const { return m_timing; }
   void RunFrame();
 
   // Audio/video callbacks
@@ -124,7 +125,6 @@ private:
   // Private gameplay functions
   bool InitializeGameplay(const std::string& gamePath, IGameAudioCallback* audio, IGameVideoCallback* video);
   bool LoadGameInfo();
-  bool NormalizeAudio(IGameAudioCallback* audioCallback);
   void NotifyError(GAME_ERROR error);
   std::string GetMissingResource();
   void CreatePlayback();
@@ -186,9 +186,10 @@ private:
   size_t                m_serializeSize;
   IGameAudioCallback*   m_audio;               // The audio callback passed to OpenFile()
   IGameVideoCallback*   m_video;               // The video callback passed to OpenFile()
-  CGameClientTiming     m_timing;              // Class to scale playback to avoid resampling audio
   PERIPHERALS::EventRateHandle m_inputRateHandle; // Handle while keeping the input sampling rate at the frame rate
   std::unique_ptr<IGameClientPlayback> m_playback; // Interface to control playback
+  double                m_fps = 0.0;           // FPS of video content
+  double                m_sampleRate = 0.0;    // Sampling rate of audio
   GAME_REGION           m_region;              // Region of the loaded game
 
   // In-game saves

@@ -20,7 +20,8 @@
 
 #include "Action.h"
 
-using namespace RETROPLAYER;
+using namespace KODI;
+using namespace RETRO;
 
 void CAction::Update(uint64_t timestamp, const CState& state, const CReward& reward, const CGoal& goal)
 {

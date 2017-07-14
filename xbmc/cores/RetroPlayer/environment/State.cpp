@@ -20,7 +20,8 @@
 
 #include "State.h"
 
-using namespace RETROPLAYER;
+using namespace KODI;
+using namespace RETRO;
 
 CState::CState(CEnvironment *environment) :
   m_timestamp(0)

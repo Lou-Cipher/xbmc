@@ -34,8 +34,10 @@ namespace KODI
 {
 namespace RETRO
 {
+  class CEnvironment;
   class CRetroPlayerAudio;
   class CRetroPlayerAutoSave;
+  class CRetroPlayerClock;
   class CRetroPlayerVideo;
 
   class CRetroPlayer : public IPlayer,
@@ -114,7 +116,7 @@ namespace RETRO
     //virtual bool HasMenu() const override { return false; }
     //virtual void DoAudioWork() override { }
     //virtual bool OnAction(const CAction &action) override { return false; }
-    bool OnAction(const CAction &action) override;
+    bool OnAction(const ::CAction &action) override;
     std::string GetPlayerState() override;
     bool SetPlayerState(const std::string& state) override;
     //virtual std::string GetPlayingTitle() override { return ""; }
@@ -168,9 +170,11 @@ namespace RETRO
 
     State                              m_state = State::STARTING;
     double                             m_priorSpeed = 0.0f; // Speed of gameplay before entering OSD
-    CDVDClock                          m_clock;
+    CDVDClock                          m_dvdClock;
     CRenderManager                     m_renderManager;
     std::unique_ptr<CProcessInfo>      m_processInfo;
+    std::unique_ptr<CRetroPlayerClock> m_clock;
+    std::unique_ptr<CEnvironment>      m_environment;
     std::unique_ptr<CRetroPlayerAudio> m_audio;
     std::unique_ptr<CRetroPlayerVideo> m_video;
     std::unique_ptr<CRetroPlayerAutoSave> m_autoSave;

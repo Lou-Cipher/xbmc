@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2016-2017 Team Kodi
+ *      Copyright (C) 2017 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,60 +19,61 @@
  */
 #pragma once
 
-#include "threads/CriticalSection.h"
-#include "threads/Event.h"
 #include "threads/Thread.h"
 
 namespace KODI
 {
-namespace GAME
+namespace RETRO
 {
-  class IGameLoopCallback
+  class IRetroPlayerClockCallback
   {
   public:
-    virtual ~IGameLoopCallback() = default;
+    virtual ~IRetroPlayerClockCallback() = default;
 
     /*!
      * \brief The next frame is being shown
      */
     virtual void FrameEvent() = 0;
-
-    /*!
-     * \brief The prior frame is being shown
-     */
-    virtual void RewindEvent() = 0;
   };
 
-  class CGameLoop : protected CThread
+  class CRetroPlayerEnvironment : public IRetroPlayerClockCallback
   {
   public:
-    CGameLoop(IGameLoopCallback* callback, double fps);
+    ~CRetroPlayerEnvironment() override = default;
+  };
 
-    virtual ~CGameLoop();
+  class CRetroPlayerClock : protected CThread
+  {
+  public:
+    CRetroPlayerClock(IRetroPlayerClockCallback *callback, double fps);
+
+    ~CRetroPlayerClock() override;
 
     void Start();
     void Stop();
 
-    double FPS() const { return m_fps; }
-
+    void SetSpeed(double speed);
     double GetSpeed() const { return m_speedFactor; }
-    void SetSpeed(double speedFactor);
 
   protected:
     // implementation of CThread
-    virtual void Process() override;
+    void Process() override;
 
   private:
+    // Timing helper functions
     double FrameTimeMs() const;
     double SleepTimeMs(double nowMs) const;
     double NowMs() const;
 
-    IGameLoopCallback* const m_callback;
-    const double             m_fps;
-    double                   m_speedFactor;
-    double                   m_lastFrameMs;
-    CEvent                   m_sleepEvent;
-    CCriticalSection         m_mutex;
+    // Construction parameters
+    IRetroPlayerClockCallback *const m_callback;
+    const double m_fps;
+
+    // Timing parameters
+    double m_speedFactor = 0.0;
+    double m_lastFrameMs = 0.0;
+    CEvent m_sleepEvent;
+    CCriticalSection m_mutex;
   };
 }
 }
