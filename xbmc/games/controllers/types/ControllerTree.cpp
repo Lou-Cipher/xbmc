@@ -29,6 +29,11 @@ using namespace GAME;
 
 // --- CControllerNode ---------------------------------------------------------
 
+CControllerNode::CControllerNode() :
+  m_hub(new CControllerHub)
+{
+}
+
 CControllerNode::~CControllerNode() = default;
 
 CControllerNode &CControllerNode::operator=(const CControllerNode &rhs)
@@ -36,10 +41,7 @@ CControllerNode &CControllerNode::operator=(const CControllerNode &rhs)
   if (this != &rhs)
   {
     m_controller = rhs.m_controller;
-    if (rhs.m_hub)
-      m_hub.reset(new CControllerHub(*rhs.m_hub));
-    else
-      m_hub.reset(new CControllerHub);
+    m_hub.reset(new CControllerHub(*rhs.m_hub));
   }
 
   return *this;

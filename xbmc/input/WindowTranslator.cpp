@@ -151,6 +151,7 @@ const CWindowTranslator::WindowMapByName CWindowTranslator::WindowMappingByName 
     { "gamevideofilter"          , WINDOW_DIALOG_GAME_VIDEO_FILTER },
     { "gameviewmode"             , WINDOW_DIALOG_GAME_VIEW_MODE },
     { "gamevolume"               , WINDOW_DIALOG_GAME_VOLUME },
+    { "gameplayers"              , WINDOW_DIALOG_GAME_PLAYERS },
 };
 
 namespace

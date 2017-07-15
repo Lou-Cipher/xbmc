@@ -38,6 +38,7 @@
  */
 
 class IListProvider;
+class TiXmlElement;
 class TiXmlNode;
 
 class CGUIBaseContainer : public IGUIContainer
@@ -73,7 +74,7 @@ public:
   void DoProcess(unsigned int currentTime, CDirtyRegionList &dirtyregions) override;
   void Process(unsigned int currentTime, CDirtyRegionList &dirtyregions) override;
 
-  void LoadLayout(TiXmlElement *layout);
+  virtual void LoadLayout(TiXmlElement *layout);
   void LoadListProvider(TiXmlElement *content, int defaultItem, bool defaultAlways);
 
   CGUIListItemPtr GetListItem(int offset, unsigned int flag = 0) const override;

@@ -42,7 +42,7 @@ namespace GAME
   class CControllerNode
   {
   public:
-    CControllerNode() = default;
+    CControllerNode();
     CControllerNode(const CControllerNode &other) { *this = other; }
     CControllerNode &operator=(const CControllerNode &rhs);
     ~CControllerNode();
