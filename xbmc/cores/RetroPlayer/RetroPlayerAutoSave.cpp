@@ -19,8 +19,6 @@
  */
 
 #include "RetroPlayerAutoSave.h"
-#include "games/addons/GameClient.h"
-#include "games/addons/playback/IGameClientPlayback.h"
 #include "utils/log.h"
 #include "URL.h"
 
@@ -47,11 +45,13 @@ void CRetroPlayerAutoSave::Process()
     if (m_bStop)
       break;
 
+    /*! @todo
     if (m_gameClient.GetPlayback()->GetSpeed() > 0.0)
     {
       std::string savePath = m_gameClient.GetPlayback()->CreateSavestate();
       if (!savePath.empty())
         CLog::Log(LOGDEBUG, "Saved state to %s", CURL::GetRedacted(savePath).c_str());
     }
+    */
   }
 }

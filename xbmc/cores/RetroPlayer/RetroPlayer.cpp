@@ -48,7 +48,6 @@
 #include "URL.h"
 
 using namespace KODI;
-using namespace GAME;
 using namespace RETRO;
 
 #define REWIND_FACTOR  0.25  // Rewind at 25% of gameplay speed
@@ -87,7 +86,7 @@ bool CRetroPlayer::OpenFile(const CFileItem& file, const CPlayerOptions& options
 
   bool bSuccess = false;
 
-  m_gameClient = CGameUtils::OpenGameClient(file);
+  m_gameClient = GAME::CGameUtils::OpenGameClient(file);
   if (m_gameClient)
   {
     if (m_gameClient->Initialize())
@@ -139,6 +138,7 @@ bool CRetroPlayer::CloseFile(bool reopen /* = false */)
 {
   CLog::Log(LOGDEBUG, "RetroPlayer: Closing file");
 
+  // Stop the game
   m_autoSave.reset();
   if (m_clock)
     m_clock->Stop();
@@ -473,7 +473,7 @@ void CRetroPlayer::CloseOSD()
 
 void CRetroPlayer::PrintGameInfo(const CFileItem &file) const
 {
-  const CGameInfoTag *tag = file.GetGameInfoTag();
+  const GAME::CGameInfoTag *tag = file.GetGameInfoTag();
   if (tag)
   {
     CLog::Log(LOGDEBUG, "RetroPlayer: ---------------------------------------");

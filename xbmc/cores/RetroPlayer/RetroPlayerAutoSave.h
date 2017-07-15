@@ -19,11 +19,15 @@
  */
 #pragma once
 
-#include "games/GameTypes.h"
 #include "threads/Thread.h"
 
 namespace KODI
 {
+namespace GAME
+{
+  class CGameClient;
+}
+
 namespace RETRO
 {
   class CRetroPlayerAutoSave : protected CThread

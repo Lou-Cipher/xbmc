@@ -25,13 +25,10 @@
 #include "threads/SingleLock.h"
 #include "ServiceBroker.h"
 
-#include <algorithm>
 #include <math.h>
 
 using namespace KODI;
 using namespace RETRO;
-
-#define REWIND_FACTOR  0.25  // Rewind at 25% of gameplay speed
 
 CReversiblePlayback::CReversiblePlayback(IFramePlayback* framePlayback, double fps) :
   m_framePlayback(framePlayback),
