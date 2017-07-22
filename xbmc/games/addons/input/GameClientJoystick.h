@@ -47,7 +47,7 @@ namespace GAME
      * \param dllStruct The emulator or game to which the events are sent.
      */
     CGameClientJoystick(const CGameClient &addon,
-                        int port,
+                        const std::string &portAddress,
                         const ControllerPtr& controller,
                         const KodiToAddonFuncTable_Game &dllStruct);
 
@@ -69,7 +69,7 @@ namespace GAME
 
   private:
     const CGameClient &m_gameClient;
-    const int                 m_port;
+    const std::string m_portAddress;
     const ControllerPtr       m_controller;
     const KodiToAddonFuncTable_Game &m_dllStruct;
   };

@@ -88,7 +88,7 @@ public:
   void Unload();
   bool OpenFile(const CFileItem& file, IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input);
   bool OpenStandalone(IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input);
-  void Reset(unsigned int port);
+  void Reset(const std::string &portAddress);
   void CloseFile();
   const std::string& GetGamePath() const { return m_gamePath; }
 
@@ -153,8 +153,6 @@ private:
   static uintptr_t cb_hw_get_current_framebuffer(void* kodiInstance);
   static game_proc_address_t cb_hw_get_proc_address(void* kodiInstance, const char* sym);
   static void cb_render_frame(void* kodiInstance);
-  static bool cb_open_port(void* kodiInstance, unsigned int port);
-  static void cb_close_port(void* kodiInstance, unsigned int port);
   static bool cb_input_event(void* kodiInstance, const game_input_event* event);
   //@}
 

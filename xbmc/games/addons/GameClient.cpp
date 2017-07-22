@@ -32,8 +32,6 @@
 #include "games/addons/input/GameClientInput.h"
 #include "games/addons/playback/GameClientRealtimePlayback.h"
 #include "games/addons/playback/GameClientReversiblePlayback.h"
-#include "games/controllers/Controller.h"
-#include "games/GameServices.h"
 #include "guilib/GUIWindowManager.h"
 #include "guilib/LocalizeStrings.h"
 #include "guilib/WindowIDs.h"
@@ -233,12 +231,11 @@ bool CGameClient::Initialize(void)
   m_struct.toKodi.HwGetCurrentFramebuffer = cb_hw_get_current_framebuffer;
   m_struct.toKodi.HwGetProcAddress = cb_hw_get_proc_address;
   m_struct.toKodi.RenderFrame = cb_render_frame;
-  m_struct.toKodi.OpenPort = cb_open_port;
-  m_struct.toKodi.ClosePort = cb_close_port;
   m_struct.toKodi.InputEvent = cb_input_event;
 
   if (Create(ADDON_INSTANCE_GAME, &m_struct, &m_struct.props) == ADDON_STATUS_OK)
   {
+    Input().Initialize();
     LogAddonProperties();
     return true;
   }
@@ -345,8 +342,6 @@ bool CGameClient::InitializeGameplay(const std::string& gamePath, IGameAudioCall
     m_audio           = audio;
     m_video           = video;
     m_input           = input;
-
-    Input().Initialize();
 
     m_inGameSaves.reset(new CGameClientInGameSaves(this, &m_struct.toAddon));
     m_inGameSaves->Load();
@@ -490,7 +485,7 @@ void CGameClient::ResetPlayback()
   m_playback.reset(new CGameClientRealtimePlayback);
 }
 
-void CGameClient::Reset(unsigned int port)
+void CGameClient::Reset(const std::string &portAddress)
 {
   ResetPlayback();
 
@@ -872,24 +867,6 @@ void CGameClient::cb_render_frame(void* kodiInstance)
     return;
 
   //! @todo
-}
-
-bool CGameClient::cb_open_port(void* kodiInstance, unsigned int port)
-{
-  CGameClient *gameClient = static_cast<CGameClient*>(kodiInstance);
-  if (!gameClient)
-    return false;
-
-  return gameClient->Input().OpenPort(port);
-}
-
-void CGameClient::cb_close_port(void* kodiInstance, unsigned int port)
-{
-  CGameClient *gameClient = static_cast<CGameClient*>(kodiInstance);
-  if (!gameClient)
-    return;
-
-  gameClient->Input().ClosePort(port);
 }
 
 bool CGameClient::cb_input_event(void* kodiInstance, const game_input_event* event)

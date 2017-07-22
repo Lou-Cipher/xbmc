@@ -19,36 +19,31 @@
  */
 #pragma once
 
-#include "input/hardware/IHardwareInput.h"
+#include "games/controllers/types/ControllerTree.h"
+#include "games/GameTypes.h"
+
+#include <memory>
 
 namespace KODI
 {
 namespace GAME
 {
-  class CGameClient;
-
-  /*!
-   * \ingroup games
-   * \brief Handles events for hardware such as reset buttons
-   */
-  class CGameClientHardware : public HARDWARE::IHardwareInput
+  class CGameClientTopology
   {
   public:
-    /*!
-     * \brief Constructor
-     *
-     * \param gameClient The game client implementation
-     */
-    explicit CGameClientHardware(CGameClient &gameClient);
+    CGameClientTopology(GameClientPortVec ports);
 
-    virtual ~CGameClientHardware() = default;
-
-    // Implementation of IHardwareInput
-    virtual void OnResetButton(const std::string &portAddress) override;
+    CControllerTree GetControllerTree() const;
 
   private:
-    // Construction parameter
-    CGameClient &m_gameClient;
+    static CControllerTree GetControllerTree(const GameClientPortVec &ports);
+    static CControllerPortNode GetPortNode(const GameClientPortPtr &port, const std::string &address);
+    static CControllerNode GetControllerNode(const GameClientDevicePtr &device, const std::string &portAddress);
+
+    // Utility function
+    static std::string MakeAddress(const std::string &baseAddress, const std::string &nodeId);
+
+    GameClientPortVec m_ports;
   };
 }
 }
