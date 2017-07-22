@@ -131,6 +131,40 @@ GAME_ERROR HwContextDestroy(void);
 // --- Input operations --------------------------------------------------------
 
 /*!
+ * \brief Check if input is accepted for a feature on the controller
+ *
+ * If only a subset of the controller profile is used, this can return false
+ * for unsupported features to not absorb their input.
+ *
+ * If the entire controller profile is used, this should always return true.
+ *
+ * \param controller_id The ID of the controller profile
+ * \param feature_name The name of a feature in that profile
+ * \return true if input is accepted for the feature, false otherwise
+ */
+bool HasFeature(const char* controller_id, const char* feature_name);
+
+/*!
+ * \brief Get the input topolgy that specifies which controllers can be connected
+ *
+ * \return The input topology, or null to use the default
+ *
+ * If this returns non-null, topology must be freed using FreeTopology().
+ *
+ * If this returns null, the topology will default to a single port that can
+ * accept all controllers imported by addon.xml. The port ID is set to
+ * the DEFAULT_PORT_ID constant.
+ */
+game_input_topology* GetTopology();
+
+/*!
+ * \brief Free the topology's resources
+ *
+ * \param topology The topology returned by GetTopology()
+ */
+void FreeTopology(game_input_topology* topology);
+
+/*!
  * \brief Enable/disable keyboard input using the specified controller
  *
  * \param enable True to enable input, false otherwise
@@ -153,27 +187,54 @@ bool EnableMouse(bool enable, const game_controller* controller);
 /*!
  * \brief Notify the add-on of a status change on an open port
  *
- * Ports can be opened using the OpenPort() callback
+ * \param enable True to enable input, false otherwise
+ * \param controller The controller info if enabling, or unused if disabling
  *
- * \param port Non-negative for a joystick port, or GAME_INPUT_PORT value otherwise
- * \param collected True if a controller was connected, false if disconnected
- * \param controller The connected controller
+ * \return True if mouse input was enabled, false otherwise
  */
-void UpdatePort(int port, bool connected, const game_controller* controller);
+bool EnableMouse(bool enable, const game_controller* controller);
 
 /*!
- * \brief Check if input is accepted for a feature on the controller
+ * \brief Connect/disconnect a controller to a port on the virtual game console
  *
- * If only a subset of the controller profile is used, this can return false
- * for unsupported features to not absorb their input.
+ * \param connect True to connect a controller, false to disconnect
+ * \param address The address of the port
+ * \param controller The controller info if connecting, or unused if disconnecting
  *
- * If the entire controller profile is used, this should always return true.
+ * The address is a string that allows traversal of the controller topology.
+ * It is formed by alternating port IDs and controller IDs separated by "/".
  *
- * \param controller_id The ID of the controller profile
- * \param feature_name The name of a feature in that profile
- * \return true if input is accepted for the feature, false otherwise
+ * For example, assume that the topology represented in XML for Snes9x is:
+ *
+ *     <logicaltopology>
+ *       <port type="controller" id="1">
+ *         <accepts controller="game.controller.snes"/>
+ *         <accepts controller="game.controller.snes.multitap">
+ *           <port type="controller" id="1">
+ *             <accepts controller="game.controller.snes"/>
+ *           </port>
+ *           <port type="controller" id="2">
+ *             <accepts controller="game.controller.snes"/>
+ *           </port>
+ *           ...
+ *         </accepts>
+ *       </port>
+ *     </logicaltopology>
+ *
+ * To connect a multitap to the console's first port, the multitap's controller
+ * info is set using the port address:
+ *
+ *     1
+ *
+ * To connect a SNES controller to the second port of the multitap, the
+ * controller info is next set using the address:
+ *
+ *     1/game.controller.multitap/2
+ *
+ * Any attempts to connect a controller to a port on a disconnected multitap
+ * will return false.
  */
-bool HasFeature(const char* controller_id, const char* feature_name);
+bool ConnectController(bool connect, const char* port_address, const game_controller* controller);
 
 /*!
  * \brief Notify the add-on of an input event
@@ -267,9 +328,11 @@ void __declspec(dllexport) get_addon(void* ptr)
   pClient->toAddon.Reset                    = Reset;
   pClient->toAddon.HwContextReset           = HwContextReset;
   pClient->toAddon.HwContextDestroy         = HwContextDestroy;
+  pClient->toAddon.HasFeature               = HasFeature;
+  pClient->toAddon.GetTopology              = GetTopology;
+  pClient->toAddon.FreeTopology             = FreeTopology;
   pClient->toAddon.EnableKeyboard           = EnableKeyboard;
   pClient->toAddon.EnableMouse              = EnableMouse;
-  pClient->toAddon.UpdatePort               = UpdatePort;
   pClient->toAddon.HasFeature               = HasFeature;
   pClient->toAddon.InputEvent               = InputEvent;
   pClient->toAddon.SerializeSize            = SerializeSize;

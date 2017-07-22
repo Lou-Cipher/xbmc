@@ -20,6 +20,7 @@
 #pragma once
 
 #include "games/addons/GameClientSubsystem.h"
+#include "games/controllers/types/ControllerTree.h"
 #include "games/controllers/ControllerTypes.h"
 
 #include <map>
@@ -52,31 +53,39 @@ namespace GAME
 
     // Input functions
     bool AcceptsInput() const;
+    const CControllerTree &GetControllerTree() const { return m_controllers; }
+    //bool IsControllerAccepted(const std::string &portAddress, const ControllerPtr &controller) const; //! @todo
+    void OpenJoystick(const std::string &portAddress);
+    void CloseJoystick(const std::string &portAddress);
 
     // Input callbacks
-    bool OpenPort(unsigned int port);
-    void ClosePort(unsigned int port);
     bool ReceiveInputEvent(const game_input_event& eventStruct);
 
   private:
     // Private input helpers
-    void UpdatePort(unsigned int port, const ControllerPtr& controller);
+    void LoadTopology();
+    bool SupportsKeyboard();
+    bool SupportsMouse();
+    void UpdatePort(const std::string &portAddress, const ControllerPtr& controller);
     void OpenKeyboard();
     void CloseKeyboard();
     void OpenMouse();
     void CloseMouse();
 
     // Private callback helpers
-    bool SetRumble(unsigned int port, const std::string& feature, float magnitude);
+    bool SetRumble(const std::string &portAddress, const std::string& feature, float magnitude);
 
     // Helper functions
     static ControllerVector GetControllers(const CGameClient &gameClient);
 
     // Input properties
-    std::map<int, std::unique_ptr<CGameClientJoystick>> m_joysticks;
+    CControllerTree m_controllers;
+    using PortAddress = std::string;
+    std::map<PortAddress, std::unique_ptr<CGameClientJoystick>> m_joysticks;
     std::unique_ptr<CGameClientKeyboard> m_keyboard;
     std::unique_ptr<CGameClientMouse> m_mouse;
     std::unique_ptr<CGameClientHardware> m_hardware;
+    int m_playerLimit = -1;
   };
 } // namespace GAME
 } // namespace KODI
