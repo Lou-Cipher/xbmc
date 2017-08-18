@@ -25,6 +25,7 @@ using namespace RETRO;
 
 void CRenderVideoSettings::Reset()
 {
+  m_shaderPreset.clear();
   m_scalingMethod = SCALINGMETHOD::AUTO;
   m_viewMode = VIEWMODE::Normal;
   m_rotationDegCCW = 0;
@@ -32,13 +33,17 @@ void CRenderVideoSettings::Reset()
 
 bool CRenderVideoSettings::operator==(const CRenderVideoSettings &rhs) const
 {
-  return m_scalingMethod == rhs.m_scalingMethod &&
+  return m_shaderPreset == rhs.m_shaderPreset &&
+         m_scalingMethod == rhs.m_scalingMethod &&
          m_viewMode == rhs.m_viewMode &&
          m_rotationDegCCW == rhs.m_rotationDegCCW;
 }
 
 bool CRenderVideoSettings::operator<(const CRenderVideoSettings &rhs) const
 {
+  if (m_shaderPreset < rhs.m_shaderPreset) return true;
+  if (m_shaderPreset > rhs.m_shaderPreset) return false;
+
   if (m_scalingMethod < rhs.m_scalingMethod) return true;
   if (m_scalingMethod > rhs.m_scalingMethod) return false;
 

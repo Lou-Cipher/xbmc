@@ -19,21 +19,5 @@
  */
 #pragma once
 
-#include "cores/GameSettings.h"
-
-#include <string>
-
-namespace KODI
-{
-namespace RETRO
-{
-  class IRenderCallback
-  {
-  public:
-    virtual ~IRenderCallback() = default;
-
-    virtual bool SupportsRenderFeature(RENDERFEATURE feature) const = 0;
-    virtual bool SupportsScalingMethod(SCALINGMETHOD method) const = 0;
-  };
-}
-}
+// String of list item property "game.videofilter" when no filter is set
+#define PROPERTY_NO_VIDEO_FILTER "-"

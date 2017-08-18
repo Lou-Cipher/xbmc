@@ -21,6 +21,8 @@
 
 #include "cores/GameSettings.h"
 
+#include <string>
+
 namespace KODI
 {
 namespace RETRO
@@ -40,6 +42,9 @@ namespace RETRO
     bool operator<(const CRenderVideoSettings &rhs) const;
     bool operator>(const CRenderVideoSettings &rhs) const { return !(*this == rhs || *this < rhs); }
 
+    const std::string &GetShaderPreset() const { return m_shaderPreset; }
+    void SetShaderPreset(const std::string &shaderPreset) { m_shaderPreset = shaderPreset; }
+
     SCALINGMETHOD GetScalingMethod() const { return m_scalingMethod; }
     void SetScalingMethod(SCALINGMETHOD method) { m_scalingMethod = method; }
 
@@ -50,6 +55,7 @@ namespace RETRO
     void SetRenderRotation(unsigned int rotationDegCCW) { m_rotationDegCCW = rotationDegCCW; }
 
   private:
+    std::string m_shaderPreset;
     SCALINGMETHOD m_scalingMethod;
     VIEWMODE m_viewMode;
     unsigned int m_rotationDegCCW;
