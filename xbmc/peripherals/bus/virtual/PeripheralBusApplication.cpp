@@ -56,6 +56,24 @@ bool CPeripheralBusApplication::PerformDeviceScan(PeripheralScanResults& results
       results.m_results.push_back(result);
   }
 
+  const bool bHasMouse = CServiceBroker::GetSettings().GetBool(CSettings::SETTING_INPUT_ENABLEMOUSE);
+
+  if (bHasMouse)
+  {
+    PeripheralScanResult result(Type());
+    result.m_type          = PERIPHERAL_MOUSE;
+    result.m_strDeviceName = "Mouse"; //! @todo
+    result.m_strLocation   = PeripheralTypeTranslator::TypeToString(PERIPHERAL_MOUSE);
+    result.m_iVendorId     = 0;
+    result.m_iProductId    = 0;
+    result.m_mappedType    = PERIPHERAL_MOUSE;
+    result.m_mappedBusType = Type();
+    result.m_iSequence     = 0;
+
+    if (!results.ContainsResult(result))
+      results.m_results.push_back(result);
+  }
+
   return true;
 }
 
