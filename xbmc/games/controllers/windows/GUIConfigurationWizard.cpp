@@ -438,9 +438,14 @@ bool CGUIConfigurationWizard::OnAction(unsigned int actionId)
   return bHandled;
 }
 
+bool CGUIConfigurationWizard::OnPosition(int x, int y)
+{
+  return true;
+}
+
 bool CGUIConfigurationWizard::OnButtonPress(unsigned int button)
 {
-  return Abort(false);
+  return false;
 }
 
 bool CGUIConfigurationWizard::IsMapping() const
@@ -458,10 +463,12 @@ void CGUIConfigurationWizard::InstallHooks(void)
   CServiceBroker::GetPeripherals().RegisterJoystickButtonMapper(this);
   CServiceBroker::GetPeripherals().RegisterObserver(this);
   CServiceBroker::GetInputManager().RegisterKeyboardDriverHandler(this);
+  CServiceBroker::GetInputManager().RegisterMouseDriverHandler(this);
 }
 
 void CGUIConfigurationWizard::RemoveHooks(void)
 {
+  CServiceBroker::GetInputManager().UnregisterMouseDriverHandler(this);
   CServiceBroker::GetInputManager().UnregisterKeyboardDriverHandler(this);
   CServiceBroker::GetPeripherals().UnregisterObserver(this);
   CServiceBroker::GetPeripherals().UnregisterJoystickButtonMapper(this);

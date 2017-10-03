@@ -342,6 +342,21 @@ bool CButtonMapping::OnKeyPress(const CKey& key)
   return GetKey(static_cast<XBMCKey>(key.GetKeycode())).OnMotion(true);
 }
 
+bool CButtonMapping::OnPosition(int x, int y)
+{
+  return false; //! @todo
+}
+
+bool CButtonMapping::OnButtonPress(unsigned int button)
+{
+  return GetButton(button).OnMotion(true);
+}
+
+void CButtonMapping::OnButtonRelease(unsigned int button)
+{
+  GetButton(button).OnMotion(false);
+}
+
 void CButtonMapping::SaveButtonMap()
 {
   m_buttonMap->SaveButtonMap();
