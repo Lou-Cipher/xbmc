@@ -23,6 +23,7 @@
 #include "input/joysticks/interfaces/IDriverHandler.h"
 #include "input/joysticks/DriverPrimitive.h"
 #include "input/keyboard/interfaces/IKeyboardDriverHandler.h"
+#include "input/mouse/interfaces/IMouseDriverHandler.h"
 
 #include <map>
 #include <stdint.h>
@@ -260,6 +261,7 @@ namespace JOYSTICK
    */
   class CButtonMapping : public IDriverHandler,
                          public KEYBOARD::IKeyboardDriverHandler,
+                         public MOUSE::IMouseDriverHandler,
                          public IButtonMapCallback
   {
   public:
@@ -282,6 +284,11 @@ namespace JOYSTICK
     // implementation of IKeyboardDriverHandler
     bool OnKeyPress(const CKey& key) override;
     void OnKeyRelease(const CKey& key) override { }
+
+    // implementation of IMouseDriverHandler
+    bool OnPosition(int x, int y) override;
+    bool OnButtonPress(unsigned int button) override;
+    void OnButtonRelease(unsigned int button) override;
 
     // implementation of IButtonMapCallback
     virtual void SaveButtonMap() override;

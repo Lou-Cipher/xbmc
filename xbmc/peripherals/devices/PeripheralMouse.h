@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2016-2017 Team Kodi
+ *      Copyright (C) 2017-2018 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,31 +19,26 @@
  */
 #pragma once
 
+#include "Peripheral.h"
 #include "input/mouse/interfaces/IMouseDriverHandler.h"
+#include "threads/CriticalSection.h"
 
-namespace KODI
-{
-namespace JOYSTICK
-{
-  class IButtonMap;
-};
+#include <vector>
 
-namespace MOUSE
+namespace PERIPHERALS
 {
-  class IMouseInputHandler;
-  class IMouseButtonMap;
-  class CRelativePointer;
-
-  /*!
-   * \ingroup mouse
-   * \brief Class to translate input from driver info to higher-level features
-   */
-  class CMouseInputHandling : public IMouseDriverHandler
+  class CPeripheralMouse : public CPeripheral,
+                           public KODI::MOUSE::IMouseDriverHandler
   {
   public:
-    CMouseInputHandling(IMouseInputHandler* handler, JOYSTICK::IButtonMap* buttonMap);
+    CPeripheralMouse(CPeripherals& manager, const PeripheralScanResult& scanResult, CPeripheralBus* bus);
 
-    ~CMouseInputHandling(void) override = default;
+    ~CPeripheralMouse(void) override;
+
+    // implementation of CPeripheral
+    bool InitialiseFeature(const PeripheralFeature feature) override;
+    void RegisterMouseDriverHandler(KODI::MOUSE::IMouseDriverHandler* handler, bool bPromiscuous) override;
+    void UnregisterMouseDriverHandler(KODI::MOUSE::IMouseDriverHandler* handler) override;
 
     // implementation of IMouseDriverHandler
     bool OnPosition(int x, int y) override;
@@ -51,13 +46,13 @@ namespace MOUSE
     void OnButtonRelease(unsigned int button) override;
 
   private:
-    // Construction parameters
-    IMouseInputHandler* const m_handler;
-    JOYSTICK::IButtonMap* const m_buttonMap;
+    struct MouseHandle
+    {
+      KODI::MOUSE::IMouseDriverHandler* handler;
+      bool bPromiscuous;
+    };
 
-    // Mouse parameters
-    int m_x;
-    int m_y;
+    std::vector<MouseHandle> m_mouseHandlers;
+    CCriticalSection m_mutex;
   };
-}
 }
