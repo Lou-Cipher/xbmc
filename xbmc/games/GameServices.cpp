@@ -21,7 +21,6 @@
 #include "GameServices.h"
 #include "controllers/Controller.h"
 #include "controllers/ControllerManager.h"
-#include "games/ports/PortManager.h"
 #include "games/GameSettings.h"
 
 using namespace KODI;
@@ -33,8 +32,7 @@ CGameServices::CGameServices(CControllerManager &controllerManager,
                              PERIPHERALS::CPeripherals &peripheralManager) :
   m_controllerManager(controllerManager),
   m_gameRenderManager(renderManager),
-  m_gameSettings(new CGameSettings(settings)),
-  m_portManager(new CPortManager(peripheralManager))
+  m_gameSettings(new CGameSettings(settings))
 {
 }
 
@@ -63,9 +61,4 @@ ControllerPtr CGameServices::GetDefaultMouse()
 ControllerVector CGameServices::GetControllers()
 {
   return m_controllerManager.GetControllers();
-}
-
-CPortManager& CGameServices::PortManager()
-{
-  return *m_portManager;
 }
