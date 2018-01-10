@@ -24,7 +24,7 @@
 #include "input/joysticks/DriverPrimitive.h"
 #include "input/joysticks/interfaces/IButtonMapper.h"
 #include "input/keyboard/interfaces/IKeyboardDriverHandler.h"
-#include "input/mouse/interfaces/IMouseInputHandler.h"
+#include "input/mouse/interfaces/IMouseDriverHandler.h"
 #include "input/XBMC_keysym.h"
 #include "threads/CriticalSection.h"
 #include "threads/Event.h"
@@ -49,7 +49,7 @@ namespace GAME
   class CGUIConfigurationWizard : public IConfigurationWizard,
                                   public JOYSTICK::IButtonMapper,
                                   public KEYBOARD::IKeyboardDriverHandler,
-                                  public MOUSE::IMouseInputHandler,
+                                  public MOUSE::IMouseDriverHandler,
                                   public Observer,
                                   protected CThread
   {
@@ -78,10 +78,10 @@ namespace GAME
     virtual bool OnKeyPress(const CKey& key) override;
     virtual void OnKeyRelease(const CKey& key) override { }
 
-    // implementation of IMouseInputHandler
-    virtual bool OnMotion(const std::string& relpointer, int dx, int dy) override { return false; }
-    virtual bool OnButtonPress(const std::string& button) override;
-    virtual void OnButtonRelease(const std::string& button) override { }
+    // implementation of IMouseDriverHandler
+    bool OnPosition(int x, int y) override { return false; }
+    bool OnButtonPress(unsigned int button) override;
+    void OnButtonRelease(unsigned int button) override { }
 
     // implementation of Observer
     virtual void Notify(const Observable& obs, const ObservableMessage msg) override;

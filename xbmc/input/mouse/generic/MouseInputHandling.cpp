@@ -19,7 +19,6 @@
  */
 
 #include "MouseInputHandling.h"
-#include "input/mouse/interfaces/IMouseButtonMap.h"
 #include "input/mouse/interfaces/IMouseInputHandler.h"
 
 using namespace KODI;
