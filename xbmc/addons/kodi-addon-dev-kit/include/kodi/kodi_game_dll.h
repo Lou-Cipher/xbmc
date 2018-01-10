@@ -131,6 +131,16 @@ GAME_ERROR HwContextDestroy(void);
 // --- Input operations --------------------------------------------------------
 
 /*!
+ * \brief Enable/disable keyboard input using the specified controller
+ *
+ * \param enable True to enable input, false otherwise
+ * \param controller The controller info if enabling, or unused if disabling
+ *
+ * \return True if keyboard input was enabled, false otherwise
+ */
+bool EnableKeyboard(bool enable, const game_controller* controller);
+
+/*!
  * \brief Notify the add-on of a status change on an open port
  *
  * Ports can be opened using the OpenPort() callback
@@ -247,6 +257,7 @@ void __declspec(dllexport) get_addon(void* ptr)
   pClient->toAddon.Reset                    = Reset;
   pClient->toAddon.HwContextReset           = HwContextReset;
   pClient->toAddon.HwContextDestroy         = HwContextDestroy;
+  pClient->toAddon.EnableKeyboard           = EnableKeyboard;
   pClient->toAddon.UpdatePort               = UpdatePort;
   pClient->toAddon.HasFeature               = HasFeature;
   pClient->toAddon.InputEvent               = InputEvent;
