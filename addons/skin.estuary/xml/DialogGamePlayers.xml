@@ -19,9 +19,9 @@
 				<top>70</top>
 				<control type="label" id="2">
 					<description>Max players label</description>
-					<top>0</top>
-					<height>42</height>
-					<font>font14</font>
+					<top>10</top>
+					<height>50</height>
+					<font>font37</font>
 					<align>center</align>
 					<aligny>center</aligny>
 					<textcolor>white</textcolor>
@@ -29,8 +29,8 @@
 				<control type="label" id="3">
 					<description>Emulator name</description>
 					<bottom>10</bottom>
-					<height>40</height>
-					<font>font14</font>
+					<height>50</height>
+					<font>font37</font>
 					<align>center</align>
 					<aligny>center</aligny>
 					<textcolor>white</textcolor>
@@ -44,6 +44,7 @@
 					<control type="group">
 						<description>Player area</description>
 						<height>372</height>
+						<!--
 						<control type="image">
 							<description>Player panel background</description>
 							<top>-20</top>
@@ -52,6 +53,7 @@
 							<right>-20</right>
 							<texture border="40">buttons/dialogbutton-nofo.png</texture>
 						</control>
+						-->
 						<control type="playerpanel" id="4">
 							<description>Player panel</description>
 							<top>116</top>
