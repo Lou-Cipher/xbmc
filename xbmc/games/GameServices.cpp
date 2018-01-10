@@ -32,6 +32,7 @@ CGameServices::CGameServices(CControllerManager &controllerManager,
                              PERIPHERALS::CPeripherals &peripheralManager) :
   m_controllerManager(controllerManager),
   m_gameRenderManager(renderManager),
+  m_peripheralManager(peripheralManager),
   m_gameSettings(new CGameSettings(settings))
 {
 }
