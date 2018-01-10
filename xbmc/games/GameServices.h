@@ -55,6 +55,7 @@ namespace GAME
 
     ControllerPtr GetController(const std::string& controllerId);
     ControllerPtr GetDefaultController();
+    ControllerPtr GetDefaultKeyboard();
     ControllerVector GetControllers();
 
     CGameSettings& GameSettings() { return *m_gameSettings; }
