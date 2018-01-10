@@ -438,7 +438,7 @@ bool CGUIConfigurationWizard::OnAction(unsigned int actionId)
   return bHandled;
 }
 
-bool CGUIConfigurationWizard::OnButtonPress(const std::string& button)
+bool CGUIConfigurationWizard::OnButtonPress(unsigned int button)
 {
   return Abort(false);
 }
@@ -458,12 +458,10 @@ void CGUIConfigurationWizard::InstallHooks(void)
   CServiceBroker::GetPeripherals().RegisterJoystickButtonMapper(this);
   CServiceBroker::GetPeripherals().RegisterObserver(this);
   CServiceBroker::GetInputManager().RegisterKeyboardDriverHandler(this);
-  CServiceBroker::GetInputManager().RegisterMouseHandler(this);
 }
 
 void CGUIConfigurationWizard::RemoveHooks(void)
 {
-  CServiceBroker::GetInputManager().UnregisterMouseHandler(this);
   CServiceBroker::GetInputManager().UnregisterKeyboardDriverHandler(this);
   CServiceBroker::GetPeripherals().UnregisterObserver(this);
   CServiceBroker::GetPeripherals().UnregisterJoystickButtonMapper(this);
