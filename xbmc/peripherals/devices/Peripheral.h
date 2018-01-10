@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "input/joysticks/interfaces/IInputProvider.h"
+#include "input/keyboard/interfaces/IKeyboardInputProvider.h"
 #include "peripherals/PeripheralTypes.h"
 
 class TiXmlDocument;
@@ -43,7 +44,7 @@ namespace JOYSTICK
 
 namespace KEYBOARD
 {
-  class IKeyboardHandler;
+  class IKeyboardDriverHandler;
 }
 }
 
@@ -61,7 +62,8 @@ namespace PERIPHERALS
     STATE_STANDBY
   } CecStateChange;
 
-  class CPeripheral : public KODI::JOYSTICK::IInputProvider
+  class CPeripheral : public KODI::JOYSTICK::IInputProvider,
+                      public KODI::KEYBOARD::IKeyboardInputProvider
   {
     friend class CGUIDialogPeripheralSettings;
 
@@ -207,12 +209,16 @@ namespace PERIPHERALS
     virtual void RegisterJoystickDriverHandler(KODI::JOYSTICK::IDriverHandler* handler, bool bPromiscuous) { }
     virtual void UnregisterJoystickDriverHandler(KODI::JOYSTICK::IDriverHandler* handler) { }
 
-    virtual void RegisterKeyboardHandler(KODI::KEYBOARD::IKeyboardHandler* handler, bool bPromiscuous) { }
-    virtual void UnregisterKeyboardHandler(KODI::KEYBOARD::IKeyboardHandler* handler) { }
+    virtual void RegisterKeyboardDriverHandler(KODI::KEYBOARD::IKeyboardDriverHandler* handler, bool bPromiscuous) { }
+    virtual void UnregisterKeyboardDriverHandler(KODI::KEYBOARD::IKeyboardDriverHandler* handler) { }
 
     // implementation of IInputProvider
     void RegisterInputHandler(KODI::JOYSTICK::IInputHandler* handler, bool bPromiscuous) override;
     void UnregisterInputHandler(KODI::JOYSTICK::IInputHandler* handler) override;
+
+    // implementation of IKeyboardInputProvider
+    void RegisterKeyboardHandler(KODI::KEYBOARD::IKeyboardInputHandler* handler, bool bPromiscuous) override;
+    void UnregisterKeyboardHandler(KODI::KEYBOARD::IKeyboardInputHandler* handler) override;
 
     virtual void RegisterJoystickButtonMapper(KODI::JOYSTICK::IButtonMapper* mapper);
     virtual void UnregisterJoystickButtonMapper(KODI::JOYSTICK::IButtonMapper* mapper);
@@ -246,6 +252,7 @@ namespace PERIPHERALS
     std::set<std::string>             m_changedSettings;
     CPeripheralBus*                  m_bus;
     std::map<KODI::JOYSTICK::IInputHandler*, std::unique_ptr<KODI::JOYSTICK::IDriverHandler>> m_inputHandlers;
+    std::map<KODI::KEYBOARD::IKeyboardInputHandler*, std::unique_ptr<KODI::KEYBOARD::IKeyboardDriverHandler>> m_keyboardHandlers;
     std::map<KODI::JOYSTICK::IButtonMapper*, std::unique_ptr<CAddonButtonMapping>> m_buttonMappers;
   };
 }

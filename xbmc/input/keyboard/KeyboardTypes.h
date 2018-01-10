@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2016-2017 Team Kodi
+ *      Copyright (C) 2017 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,32 +19,22 @@
  */
 #pragma once
 
-#include "input/keyboard/interfaces/IKeyboardDriverHandler.h"
-#include "input/XBMC_vkeys.h"
+#include "input/Key.h"
 
-#include <vector>
+#include <string>
 
 namespace KODI
 {
 namespace KEYBOARD
 {
   /*!
-   * \brief Hush!!!
+   * \brief Name of a hardware-indendent symbol representing a key
+   *
+   * Names are defined in the keyboard's controller profile.
    */
-  class CKeyboardEasterEgg : public IKeyboardDriverHandler
-  {
-  public:
-    CKeyboardEasterEgg(void);
-    ~CKeyboardEasterEgg() override = default;
+  using KeyName = std::string;
 
-    // implementation of IKeyboardDriverHandler
-    bool OnKeyPress(const CKey& key) override;
-    void OnKeyRelease(const CKey& key) override { }
-
-  private:
-    static std::vector<XBMCVKey> m_sequence;
-
-    unsigned int m_state;
-  };
+  //! @todo Move CKey enum to this file
+  using Modifier = CKey::Modifier;
 }
 }

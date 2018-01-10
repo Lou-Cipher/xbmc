@@ -33,6 +33,7 @@
 #include "input/joysticks/JoystickTypes.h"
 #include "input/InputManager.h"
 #include "peripherals/Peripherals.h"
+#include "peripherals/PeripheralTypes.h" //! @todo
 //#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "ServiceBroker.h"
@@ -178,7 +179,13 @@ void CGameClientInput::UpdatePort(unsigned int port, const ControllerPtr& contro
 
 void CGameClientInput::OpenKeyboard()
 {
-  m_keyboard.reset(new CGameClientKeyboard(m_gameClient, m_struct.toAddon, &CServiceBroker::GetInputManager()));
+  using namespace PERIPHERALS;
+
+  PeripheralVector keyboards; //! @todo Move to player manager
+  CServiceBroker::GetPeripherals().GetPeripheralsWithFeature(keyboards, FEATURE_KEYBOARD);
+
+  if (!keyboards.empty())
+    m_keyboard.reset(new CGameClientKeyboard(m_gameClient, m_struct.toAddon, keyboards[0].get()));
 }
 
 void CGameClientInput::CloseKeyboard()

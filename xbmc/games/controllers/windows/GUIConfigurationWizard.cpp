@@ -469,14 +469,14 @@ void CGUIConfigurationWizard::InstallHooks(void)
 {
   CServiceBroker::GetPeripherals().RegisterJoystickButtonMapper(this);
   CServiceBroker::GetPeripherals().RegisterObserver(this);
-  CServiceBroker::GetInputManager().RegisterKeyboardHandler(this);
+  CServiceBroker::GetInputManager().RegisterKeyboardDriverHandler(this);
   CServiceBroker::GetInputManager().RegisterMouseHandler(this);
 }
 
 void CGUIConfigurationWizard::RemoveHooks(void)
 {
   CServiceBroker::GetInputManager().UnregisterMouseHandler(this);
-  CServiceBroker::GetInputManager().UnregisterKeyboardHandler(this);
+  CServiceBroker::GetInputManager().UnregisterKeyboardDriverHandler(this);
   CServiceBroker::GetPeripherals().UnregisterObserver(this);
   CServiceBroker::GetPeripherals().UnregisterJoystickButtonMapper(this);
 }

@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include "input/keyboard/interfaces/IKeyboardHandler.h"
+#include "input/keyboard/interfaces/IKeyboardInputHandler.h"
 
 struct KodiToAddonFuncTable_Game;
 
@@ -40,7 +40,7 @@ namespace GAME
    *
    * Listens to keyboard events and forwards them to the games (as game_input_event).
    */
-  class CGameClientKeyboard : public KEYBOARD::IKeyboardHandler
+  class CGameClientKeyboard : public KEYBOARD::IKeyboardInputHandler
   {
   public:
     /*!
@@ -58,9 +58,11 @@ namespace GAME
      */
     virtual ~CGameClientKeyboard();
 
-    // implementation of IKeyboardHandler
-    virtual bool OnKeyPress(const CKey& key) override;
-    virtual void OnKeyRelease(const CKey& key) override;
+    // implementation of IKeyboardInputHandler
+    std::string ControllerID() const override;
+    bool HasKey(const KEYBOARD::KeyName &key) const override;
+    bool OnKeyPress(const KEYBOARD::KeyName &key, KEYBOARD::Modifier mod, uint32_t unicode) override;
+    void OnKeyRelease(const KEYBOARD::KeyName &key, KEYBOARD::Modifier mod, uint32_t unicode) override;
 
   private:
     // Construction parameters
