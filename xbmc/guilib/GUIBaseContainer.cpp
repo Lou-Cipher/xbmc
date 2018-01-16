@@ -770,7 +770,12 @@ bool CGUIBaseContainer::OnClick(int actionID)
         if (m_clickActions.HasActionsMeetingCondition())
           m_clickActions.ExecuteActions(0, GetParentID(), m_items[selected]);
         else
-          m_listProvider->OnClick(m_items[selected]);
+        {
+          // Save item as reference count may drop to zero if click action
+          // deactivates window
+          CGUIListItemPtr item = m_items[selected];
+          m_listProvider->OnClick(item);
+        }
       }
       return true;
     }
