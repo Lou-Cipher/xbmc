@@ -56,7 +56,7 @@ namespace KODI
 {
 namespace KEYBOARD
 {
-  class IKeyboardHandler;
+  class IKeyboardDriverHandler;
 }
 
 namespace MOUSE
@@ -285,9 +285,8 @@ public:
   // implementation of IActionListener
   virtual bool OnAction(const CAction& action) override;
 
-  // implementation of IKeyboardInputProvider
-  virtual void RegisterKeyboardHandler(KODI::KEYBOARD::IKeyboardHandler* handler) override;
-  virtual void UnregisterKeyboardHandler(KODI::KEYBOARD::IKeyboardHandler* handler) override;
+  void RegisterKeyboardDriverHandler(KODI::KEYBOARD::IKeyboardDriverHandler* handler) override;
+  void UnregisterKeyboardDriverHandler(KODI::KEYBOARD::IKeyboardDriverHandler* handler) override;
 
   // implementation of IMouseInputProvider
   virtual std::string RegisterMouseHandler(KODI::MOUSE::IMouseInputHandler* handler) override;
@@ -364,7 +363,7 @@ private:
   std::unique_ptr<CTouchTranslator> m_touchTranslator;
   std::unique_ptr<CJoystickMapper> m_joystickTranslator;
 
-  std::vector<KODI::KEYBOARD::IKeyboardHandler*> m_keyboardHandlers;
+  std::vector<KODI::KEYBOARD::IKeyboardDriverHandler*> m_keyboardHandlers;
 
   struct MouseHandlerHandle
   {
@@ -375,7 +374,7 @@ private:
   std::vector<MouseHandlerHandle> m_mouseHandlers;
   std::unique_ptr<KODI::MOUSE::IMouseButtonMap> m_mouseButtonMap;
 
-  std::unique_ptr<KODI::KEYBOARD::IKeyboardHandler> m_keyboardEasterEgg;
+  std::unique_ptr<KODI::KEYBOARD::IKeyboardDriverHandler> m_keyboardEasterEgg;
 };
 
 /// \}
