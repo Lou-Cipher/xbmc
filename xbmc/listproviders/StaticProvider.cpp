@@ -117,6 +117,6 @@ bool CStaticListProvider::AlwaysFocusDefaultItem() const
 
 bool CStaticListProvider::OnClick(const CGUIListItemPtr &item)
 {
-  CGUIStaticItem *staticItem = static_cast<CGUIStaticItem*>(item.get());
+  CGUIStaticItemPtr staticItem = std::static_pointer_cast<CGUIStaticItem>(item);
   return staticItem->GetClickActions().ExecuteActions(0, m_parentID);
 }
