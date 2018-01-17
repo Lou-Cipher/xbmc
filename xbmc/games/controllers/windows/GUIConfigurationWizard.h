@@ -79,7 +79,7 @@ namespace GAME
     virtual void OnKeyRelease(const CKey& key) override { }
 
     // implementation of IMouseDriverHandler
-    bool OnPosition(int x, int y) override;
+    bool OnPosition(int x, int y) override { return false; }
     bool OnButtonPress(unsigned int button) override;
     void OnButtonRelease(unsigned int button) override { }
 

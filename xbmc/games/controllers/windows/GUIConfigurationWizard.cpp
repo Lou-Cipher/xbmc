@@ -438,14 +438,27 @@ bool CGUIConfigurationWizard::OnAction(unsigned int actionId)
   return bHandled;
 }
 
-bool CGUIConfigurationWizard::OnPosition(int x, int y)
-{
-  return true;
-}
-
 bool CGUIConfigurationWizard::OnButtonPress(unsigned int button)
 {
-  return false;
+  bool bHandled = false;
+
+  if (!m_bStop)
+  {
+    // Only allow key to abort the prompt if we know for sure that we're mapping
+    // a controller
+    const bool bIsMappingController = (IsMapping() && !m_bIsKeyboard);
+
+    if (bIsMappingController)
+    {
+      //bHandled = OnKeyAction(m_actionMap->GetActionID(key)); //! @todo
+    }
+    else
+    {
+      // Allow key press to fall through to the button mapper
+    }
+  }
+
+  return bHandled;
 }
 
 bool CGUIConfigurationWizard::IsMapping() const
@@ -460,8 +473,13 @@ bool CGUIConfigurationWizard::IsMapping(const std::string &deviceName) const
 
 void CGUIConfigurationWizard::InstallHooks(void)
 {
+  // Install button mapper with losest priority
   CServiceBroker::GetPeripherals().RegisterJoystickButtonMapper(this);
+
+  // Install hook to reattach button mapper
   CServiceBroker::GetPeripherals().RegisterObserver(this);
+
+  // Install hook
   CServiceBroker::GetInputManager().RegisterKeyboardDriverHandler(this);
   CServiceBroker::GetInputManager().RegisterMouseDriverHandler(this);
 }
