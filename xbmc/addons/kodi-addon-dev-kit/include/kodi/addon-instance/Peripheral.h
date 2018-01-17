@@ -193,7 +193,6 @@ extern "C"
     JOYSTICK_DRIVER_PRIMITIVE_TYPE_SEMIAXIS,
     JOYSTICK_DRIVER_PRIMITIVE_TYPE_MOTOR,
     JOYSTICK_DRIVER_PRIMITIVE_TYPE_KEY,
-    JOYSTICK_DRIVER_PRIMITIVE_TYPE_MOUSE_BUTTON,
   } JOYSTICK_DRIVER_PRIMITIVE_TYPE;
 
   /*!
@@ -263,44 +262,6 @@ extern "C"
   } ATTRIBUTE_PACKED JOYSTICK_DRIVER_KEY;
 
   /*!
-   * @brief Mouse button primitive
-   */
-  typedef struct JOYSTICK_DRIVER_MOUSE_BUTTON
-  {
-    char symbol[16];
-  } ATTRIBUTE_PACKED JOYSTICK_DRIVER_MOUSE_BUTTON;
-
-  /*!
-   * @brief Mouse pointer direction
-   */
-  typedef enum JOYSTICK_DRIVER_MOUSE_DIRECTION
-  {
-    JOYSTICK_DRIVER_HAT_UNKNOWN,
-    JOYSTICK_DRIVER_HAT_LEFT,
-    JOYSTICK_DRIVER_HAT_RIGHT,
-    JOYSTICK_DRIVER_HAT_UP,
-    JOYSTICK_DRIVER_HAT_DOWN,
-  } JOYSTICK_DRIVER_HAT_DIRECTION;
-
-  /*!
-   * @brief Mouse pointer direction primitive
-   */
-  typedef struct JOYSTICK_DRIVER_MOUSE_BUTTON
-  {
-    char symbol[16];
-  } ATTRIBUTE_PACKED JOYSTICK_DRIVER_MOUSE_BUTTON;
-
-
-  JOYSTICK_DRIVER_MOUSE_SEMIAXIS
-  /*!
-   * @brief Mouse axis
-   */
-  typedef struct JOYSTICK_DRIVER_MOUSE_BUTTON
-  {
-    char symbol[16];
-  } ATTRIBUTE_PACKED JOYSTICK_DRIVER_MOUSE_BUTTON;
-
-  /*!
    * @brief Driver primitive struct
    */
   typedef struct JOYSTICK_DRIVER_PRIMITIVE
@@ -313,8 +274,6 @@ extern "C"
       struct JOYSTICK_DRIVER_SEMIAXIS semiaxis;
       struct JOYSTICK_DRIVER_MOTOR    motor;
       struct JOYSTICK_DRIVER_KEY      key;
-      struct JOYSTICK_DRIVER_MOUSE_BUTTON mouse_button;
-      struct JOYSTICK_DRIVER_MOUSE_SEMIAXIS mouse_semiaxis;
     };
   } ATTRIBUTE_PACKED JOYSTICK_DRIVER_PRIMITIVE;
 
