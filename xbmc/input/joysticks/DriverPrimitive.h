@@ -67,6 +67,9 @@ namespace JOYSTICK
    *    Key:
    *       - keycode
    *
+   *    Mouse:
+   *       - mouse button
+   *
    * For more info, see "Chapter 2. Joystick drivers" in the documentation
    * thread: http://forum.kodi.tv/showthread.php?tid=257764
    */
