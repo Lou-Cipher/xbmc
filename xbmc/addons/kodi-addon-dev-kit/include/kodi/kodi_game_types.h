@@ -499,9 +499,9 @@ typedef struct KodiToAddonFuncTable_Game
   GAME_ERROR  (__cdecl* Reset)(void);
   GAME_ERROR  (__cdecl* HwContextReset)(void);
   GAME_ERROR  (__cdecl* HwContextDestroy)(void);
-  bool        (__cdecl* EnableKeyboard)(bool, const game_controller*);
   void        (__cdecl* UpdatePort)(int, bool, const game_controller*);
   bool        (__cdecl* HasFeature)(const char* controller_id, const char* feature_name);
+  bool        (__cdecl* EnableKeyboard)(bool, const game_controller*);
   bool        (__cdecl* InputEvent)(const game_input_event*);
   size_t      (__cdecl* SerializeSize)(void);
   GAME_ERROR  (__cdecl* Serialize)(uint8_t*, size_t);
