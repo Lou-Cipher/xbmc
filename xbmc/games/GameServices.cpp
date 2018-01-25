@@ -23,6 +23,7 @@
 #include "controllers/ControllerManager.h"
 #include "games/ports/PortManager.h"
 #include "games/GameSettings.h"
+#include "profiles/ProfilesManager.h"
 
 using namespace KODI;
 using namespace GAME;
@@ -30,9 +31,11 @@ using namespace GAME;
 CGameServices::CGameServices(CControllerManager &controllerManager,
                              RETRO:: CGUIGameRenderManager &renderManager,
                              CSettings &settings,
-                             PERIPHERALS::CPeripherals &peripheralManager) :
+                             PERIPHERALS::CPeripherals &peripheralManager,
+                             const CProfilesManager &profileManager) :
   m_controllerManager(controllerManager),
   m_gameRenderManager(renderManager),
+  m_profileManager(profileManager),
   m_gameSettings(new CGameSettings(settings)),
   m_portManager(new CPortManager(peripheralManager))
 {
@@ -58,6 +61,11 @@ ControllerPtr CGameServices::GetDefaultKeyboard()
 ControllerVector CGameServices::GetControllers()
 {
   return m_controllerManager.GetControllers();
+}
+
+std::string CGameServices::GetSavestatesFolder() const
+{
+  return m_profileManager.GetSavestatesFolder();
 }
 
 CPortManager& CGameServices::PortManager()

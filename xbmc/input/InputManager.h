@@ -47,6 +47,7 @@ class CCustomControllerTranslator;
 class CIRTranslator;
 class CJoystickMapper;
 class CKey;
+class CProfilesManager;
 class CTouchTranslator;
 class IKeymapEnvironment;
 class IWindowKeymap;
@@ -85,7 +86,8 @@ class CInputManager : public ISettingCallback,
                       public Observable
 {
 public:
-  explicit CInputManager(const CAppParamParser &params);
+  explicit CInputManager(const CAppParamParser &params,
+                         const CProfilesManager &profileManager);
   CInputManager(const CInputManager&) = delete;
   CInputManager const& operator=(CInputManager const&) = delete;
   ~CInputManager() override;
