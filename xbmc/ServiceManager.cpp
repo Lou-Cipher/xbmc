@@ -45,6 +45,7 @@
 #include "windowing/WinSystem.h"
 #include "powermanagement/PowerManager.h"
 #include "weather/WeatherManager.h"
+#include "DatabaseManager.h"
 
 using namespace KODI;
 
@@ -109,6 +110,9 @@ bool CServiceManager::InitStageOne()
 
 bool CServiceManager::InitStageTwo(const CAppParamParser &params)
 {
+  // Initialize the addon database (must be before the addon manager is init'd)
+  m_databaseManager.reset(new CDatabaseManager);
+
   m_Platform.reset(CPlatform::CreateInstance());
   m_Platform->Init();
 
@@ -249,6 +253,7 @@ void CServiceManager::DeinitStageTwo()
   m_binaryAddonManager.reset();
   m_addonMgr.reset();
   m_Platform.reset();
+  m_databaseManager.reset();
 }
 
 void CServiceManager::DeinitStageOne()
@@ -442,4 +447,9 @@ CWeatherManager& CServiceManager::GetWeatherManager()
 CPlayerCoreFactory &CServiceManager::GetPlayerCoreFactory()
 {
   return *m_playerCoreFactory;
+}
+
+CDatabaseManager &CServiceManager::GetDatabaseManager()
+{
+  return *m_databaseManager;
 }
