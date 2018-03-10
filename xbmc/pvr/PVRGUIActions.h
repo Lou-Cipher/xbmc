@@ -29,6 +29,7 @@
 #include "pvr/PVRSettings.h"
 #include "pvr/PVRTypes.h"
 
+class CAction;
 class CFileItem;
 typedef std::shared_ptr<CFileItem> CFileItemPtr;
 
@@ -472,15 +473,6 @@ namespace PVR
      * @param bFullscreen switch to fullscreen or set windowed playback.
      */
     void CheckAndSwitchToFullscreen(bool bFullscreen) const;
-
-    /*!
-     * @brief Switch channel.
-     * @param item containing a channel or an epg tag.
-     * @param bCheckResume controls resume check in case a recording for the current epg event is present.
-     * @param bFullscreen start playback fullscreen or not.
-     * @return true on success, false otherwise.
-     */
-    bool SwitchToChannel(const CFileItemPtr &item, bool bCheckResume, bool bFullscreen) const;
 
     /*!
      * @brief Start playback of the given item.

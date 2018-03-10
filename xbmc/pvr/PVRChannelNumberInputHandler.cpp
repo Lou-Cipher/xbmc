@@ -49,6 +49,18 @@ void CPVRChannelNumberInputHandler::OnTimeout()
   m_inputBuffer.erase();
 }
 
+bool CPVRChannelNumberInputHandler::CheckInputAndExecuteAction()
+{
+  const CPVRChannelNumber channelNumber = GetChannelNumber();
+  if (channelNumber.IsValid())
+  {
+    // we have a valid channel number; execute the associated action now.
+    OnTimeout();
+    return true;
+  }
+  return false;
+}
+
 void CPVRChannelNumberInputHandler::AppendChannelNumberCharacter(char cCharacter)
 {
   if (cCharacter != CPVRChannelNumber::SEPARATOR && (cCharacter < '0' || cCharacter > '9'))
@@ -103,6 +115,11 @@ CPVRChannelNumber CPVRChannelNumberInputHandler::GetChannelNumber() const
   }
 
   return CPVRChannelNumber(iChannelNumber, iSubChannelNumber);
+}
+
+bool CPVRChannelNumberInputHandler::HasChannelNumber() const
+{
+  return !m_inputBuffer.empty();
 }
 
 std::string CPVRChannelNumberInputHandler::GetChannelNumberAsString() const

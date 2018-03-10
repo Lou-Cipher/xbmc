@@ -31,8 +31,6 @@
 #include "video/dialogs/GUIDialogSubtitleSettings.h"
 #include "guilib/GUIWindowManager.h"
 #include "input/Key.h"
-#include "pvr/PVRGUIActions.h"
-#include "pvr/PVRManager.h"
 #include "video/dialogs/GUIDialogFullScreenInfo.h"
 #include "settings/DisplaySettings.h"
 #include "settings/MediaSettings.h"
@@ -43,7 +41,6 @@
 #include "threads/SingleLock.h"
 #include "utils/StringUtils.h"
 #include "XBDateTime.h"
-#include "input/InputManager.h"
 #include "windowing/WinSystem.h"
 #include "cores/IPlayer.h"
 #include "guiinfo/GUIInfoLabels.h"
@@ -95,18 +92,6 @@ CGUIWindowFullScreen::~CGUIWindowFullScreen(void)
 
 bool CGUIWindowFullScreen::OnAction(const CAction &action)
 {
-  if (CServiceBroker::GetSettings().GetBool(CSettings::SETTING_PVRPLAYBACK_CONFIRMCHANNELSWITCH) &&
-      CServiceBroker::GetPVRManager().GUIActions()->GetChannelNavigator().IsPreview() &&
-      (action.GetID() == ACTION_SELECT_ITEM ||
-       CServiceBroker::GetInputManager().GetGlobalAction(action.GetButtonCode()).GetID() == ACTION_SELECT_ITEM))
-  {
-    // If confirm channel switch is active, channel preview is currently shown
-    // and the button that caused this action matches (global) action "Select" (OK)
-    // switch to the channel currently displayed within the preview.
-    CServiceBroker::GetPVRManager().GUIActions()->GetChannelNavigator().SwitchToCurrentChannel();
-    return true;
-  }
-
   switch (action.GetID())
   {
   case ACTION_SHOW_OSD:
