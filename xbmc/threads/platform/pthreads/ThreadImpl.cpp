@@ -28,16 +28,42 @@
 #include <string.h>
 #ifdef TARGET_FREEBSD
 #include <sys/param.h>
-#if __FreeBSD_version < 900031
-#include <sys/thr.h>
-#else
 #include <pthread_np.h>
-#endif
 #endif
 
 #include <signal.h>
 #include "utils/log.h"
 
+namespace XbmcThreads
+{
+  // ==========================================================
+  static pthread_mutexattr_t recursiveAttr;
+
+  static bool setRecursiveAttr()
+  {
+    static bool alreadyCalled = false; // initialized to 0 in the data segment prior to startup init code running
+    if (!alreadyCalled)
+    {
+      pthread_mutexattr_init(&recursiveAttr);
+      pthread_mutexattr_settype(&recursiveAttr,PTHREAD_MUTEX_RECURSIVE);
+#if !defined(TARGET_ANDROID)
+      pthread_mutexattr_setprotocol(&recursiveAttr,PTHREAD_PRIO_INHERIT);
+#endif
+      alreadyCalled = true;
+    }
+    return true; // note, we never call destroy.
+  }
+
+  static bool recursiveAttrSet = setRecursiveAttr();
+
+  pthread_mutexattr_t* CRecursiveMutex::getRecursiveAttr()
+  {
+    if (!recursiveAttrSet) // this is only possible in the single threaded startup code
+      recursiveAttrSet = setRecursiveAttr();
+    return &recursiveAttr;
+  }
+  // ==========================================================
+}
 void CThread::SpawnThread(unsigned stacksize)
 {
   pthread_attr_t attr;
@@ -59,13 +85,7 @@ void CThread::TermHandler() { }
 void CThread::SetThreadInfo()
 {
 #ifdef TARGET_FREEBSD
-#if __FreeBSD_version < 900031
-  long lwpid;
-  thr_self(&lwpid);
-  m_ThreadOpaque.LwpId = lwpid;
-#else
   m_ThreadOpaque.LwpId = pthread_getthreadid_np();
-#endif
 #elif defined(TARGET_ANDROID)
   m_ThreadOpaque.LwpId = gettid();
 #else
@@ -74,9 +94,7 @@ void CThread::SetThreadInfo()
 
 #if defined(HAVE_PTHREAD_SETNAME_NP)
 #ifdef TARGET_DARWIN
-#if(__MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 || __IPHONE_OS_VERSION_MIN_REQUIRED >= 30200)
   pthread_setname_np(m_ThreadName.c_str());
-#endif
 #else
   pthread_setname_np(m_ThreadId, m_ThreadName.c_str());
 #endif

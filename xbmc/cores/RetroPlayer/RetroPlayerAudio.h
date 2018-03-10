@@ -38,9 +38,7 @@ namespace RETRO
     ~CRetroPlayerAudio() override;
 
     // implementation of IGameAudioCallback
-    unsigned int NormalizeSamplerate(unsigned int samplerate) const override;
-    bool OpenPCMStream(AEDataFormat format, unsigned int samplerate, const CAEChannelInfo& channelLayout) override;
-    bool OpenEncodedStream(AVCodecID codec, unsigned int samplerate, const CAEChannelInfo& channelLayout) override;
+    bool OpenStream(AEDataFormat format, unsigned int samplerate, const CAEChannelInfo& channelLayout) override;
     void AddData(const uint8_t* data, unsigned int size) override;
     void CloseStream() override;
 
