@@ -444,7 +444,7 @@
 #define FANART_IMAGE                1003
 
 #define SYSTEM_PROFILEAUTOLOGIN     1004
-#define SYSTEM_HAS_ADSP             1005
+
 #define SYSTEM_HAS_CMS              1006
 
 #define PVR_CONDITIONS_START        1100
@@ -532,26 +532,6 @@
 #define PVR_TIMESHIFT_OFFSET              (PVR_STRINGS_START + 62)
 #define PVR_EPG_EVENT_SEEK_TIME           (PVR_STRINGS_START + 63)
 #define PVR_STRINGS_END                   PVR_EPG_EVENT_SEEK_TIME
-
-#define ADSP_CONDITIONS_START       1300
-#define ADSP_IS_ACTIVE              (ADSP_CONDITIONS_START)
-#define ADSP_HAS_INPUT_RESAMPLE     (ADSP_CONDITIONS_START + 1)
-#define ADSP_HAS_PRE_PROCESS        (ADSP_CONDITIONS_START + 2)
-#define ADSP_HAS_MASTER_PROCESS     (ADSP_CONDITIONS_START + 3)
-#define ADSP_HAS_POST_PROCESS       (ADSP_CONDITIONS_START + 4)
-#define ADSP_HAS_OUTPUT_RESAMPLE    (ADSP_CONDITIONS_START + 5)
-#define ADSP_MASTER_ACTIVE          (ADSP_CONDITIONS_START + 6)
-#define ADSP_HAS_MODES              (ADSP_CONDITIONS_START + 7)
-#define ADSP_CONDITIONS_END         ADSP_HAS_MODES
-
-#define ADSP_STRINGS_START          1350
-#define ADSP_ACTIVE_STREAM_TYPE     (ADSP_STRINGS_START)
-#define ADSP_DETECTED_STREAM_TYPE   (ADSP_STRINGS_START + 1)
-#define ADSP_MASTER_NAME            (ADSP_STRINGS_START + 7)
-#define ADSP_MASTER_INFO            (ADSP_STRINGS_START + 8)
-#define ADSP_MASTER_OWN_ICON        (ADSP_STRINGS_START + 9)
-#define ADSP_MASTER_OVERRIDE_ICON   (ADSP_STRINGS_START + 10)
-#define ADSP_STRINGS_END            ADSP_MASTER_OVERRIDE_ICON
 
 #define RDS_DATA_START              1400
 #define RDS_HAS_RDS                 (RDS_DATA_START)
@@ -822,7 +802,7 @@
 
 //! @todo There are issues with the LISTITEM_PROPERTY range, breakage occurs when more than 200 properties are used in skins.
 #define LISTITEM_PROPERTY_START     (LISTITEM_START + 200)
-#define LISTITEM_PROPERTY_END       (LISTITEM_PROPERTY_START + 2300)
+#define LISTITEM_PROPERTY_END       (LISTITEM_PROPERTY_START + 2500)
 #define LISTITEM_END                (LISTITEM_PROPERTY_END)
 
 #define MUSICPLAYER_PROPERTY_OFFSET       1300  // 200 id's reserved for musicplayer props.
@@ -830,8 +810,9 @@
 #define LISTITEM_RATING_OFFSET      1700 // 200 id's reserved for listitem ratings.
 #define LISTITEM_VOTES_OFFSET       1900 // 200 id's reserved for listitem votes.
 #define LISTITEM_RATING_AND_VOTES_OFFSET  2100 // 200 id's reserved for listitem ratingandvotes.
+#define LISTITEM_DURATION_OFFSET    2300 // 200 id's reserved for listitem duration.
 
-#define CONDITIONAL_LABEL_START       LISTITEM_END + 1 // 37501
+#define CONDITIONAL_LABEL_START       LISTITEM_END + 1 // 37701
 #define CONDITIONAL_LABEL_END         38500
 
 // the multiple information vector

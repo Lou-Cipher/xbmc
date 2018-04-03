@@ -21,10 +21,12 @@
 #include "DeviceResources.h"
 #include "DirectXHelper.h"
 #include "RenderContext.h"
+#include "guilib/GUIComponent.h"
 #include "guilib/GUIWindowManager.h"
 #include "guilib/GraphicContext.h"
 #include "messaging/ApplicationMessenger.h"
 #include "platform/win32/CharsetConverter.h"
+#include "ServiceBroker.h"
 #include "utils/log.h"
 
 using namespace DirectX;
@@ -75,13 +77,18 @@ DX::DeviceResources::DeviceResources()
   , m_deviceNotify(nullptr)
   , m_stereoEnabled(false)
   , m_bDeviceCreated(false)
+  , m_ctx_mutex(INVALID_HANDLE_VALUE)
 {
+  m_ctx_mutex = CreateMutexExW(nullptr, nullptr, 0, SYNCHRONIZE);
 }
 
 DX::DeviceResources::~DeviceResources()
 {
   if (m_bDeviceCreated)
     Release();
+  if (m_ctx_mutex != INVALID_HANDLE_VALUE)
+    CloseHandle(m_ctx_mutex);
+  m_ctx_mutex = INVALID_HANDLE_VALUE;
 }
 
 void DX::DeviceResources::Release()
@@ -230,7 +237,7 @@ bool DX::DeviceResources::SetFullScreen(bool fullscreen, RESOLUTION_INFO& res)
         // some drivers unable to create stereo swapchain if mode does not match @23.976
         || g_graphicsContext.GetStereoMode() == RENDER_STEREO_MODE_HARDWAREBASED)
       {
-        CLog::Log(LOGDEBUG, __FUNCTION__": changing display mode to %dx%d@%0.3fs", res.iWidth, res.iHeight, res.fRefreshRate,
+        CLog::Log(LOGDEBUG, __FUNCTION__": changing display mode to %dx%d@%0.3f", res.iWidth, res.iHeight, res.fRefreshRate,
                   res.dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "");
 
         int refresh = static_cast<int>(res.fRefreshRate);
@@ -244,6 +251,18 @@ bool DX::DeviceResources::SetFullScreen(bool fullscreen, RESOLUTION_INFO& res)
         {
           currentMode.RefreshRate.Numerator *= 2;
           currentMode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST; // guessing;
+        }
+        // sometimes the OS silently brings Kodi out of full screen mode
+        // in this case switching a resolution has no any effect and
+        // we have to enter into full screen mode before switching
+        if (!bFullScreen)
+        {
+          ComPtr<IDXGIOutput> pOutput;
+          GetOutput(pOutput.GetAddressOf());
+
+          CLog::LogF(LOGDEBUG, "fixup fullscreen mode before switching resolution");
+          recreate |= SUCCEEDED(m_swapChain->SetFullscreenState(true, pOutput.Get()));
+          m_swapChain->GetFullscreenState(&bFullScreen, nullptr);
         }
         recreate |= SUCCEEDED(m_swapChain->ResizeTarget(&currentMode));
       }
@@ -751,7 +770,7 @@ void DX::DeviceResources::ValidateDevice()
 
 void DX::DeviceResources::OnDeviceLost(bool removed)
 {
-  g_windowManager.SendMessage(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_RENDERER_LOST);
+  CServiceBroker::GetGUI()->GetWindowManager().SendMessage(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_RENDERER_LOST);
 
   // tell any shared resources
   for (auto res : m_resources)
@@ -770,7 +789,7 @@ void DX::DeviceResources::OnDeviceRestored()
   for (auto res : m_resources)
     res->OnCreateDevice();
 
-  g_windowManager.SendMessage(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_RENDERER_RESET);
+  CServiceBroker::GetGUI()->GetWindowManager().SendMessage(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_RENDERER_RESET);
 }
 
 // Recreate all device resources and set them back to the current state.
@@ -831,6 +850,9 @@ void DX::DeviceResources::Present()
   FinishCommandList();
   m_d3dContext->Flush();
 
+  if (m_ctx_mutex != INVALID_HANDLE_VALUE)
+    WaitForSingleObjectEx(m_ctx_mutex, INFINITE, FALSE);
+
   // The first argument instructs DXGI to block until VSync, putting the application
   // to sleep until the next VSync. This ensures we don't waste any cycles rendering
   // frames that will never be displayed to the screen.
@@ -851,6 +873,9 @@ void DX::DeviceResources::Present()
       CreateWindowSizeDependentResources();
     }
   }
+
+  if (m_ctx_mutex != INVALID_HANDLE_VALUE)
+    ReleaseMutex(m_ctx_mutex);
 
   if (m_d3dContext == m_deferrContext)
   {

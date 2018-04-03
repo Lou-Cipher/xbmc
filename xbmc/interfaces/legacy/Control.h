@@ -78,8 +78,7 @@ namespace XBMCAddon
                   iControlRight(0), pGUIControl(NULL) {}
 
     public:
-      //! @todo Switch to 'override' usage once 14.04 (Trusty) hits EOL. swig <3.0 doesn't understand C++11
-      virtual ~Control();
+      ~Control() override;
 
 #ifndef SWIG
       virtual CGUIControl* Create();
@@ -674,8 +673,7 @@ namespace XBMCAddon
     class ControlSpin : public Control
     {
     public:
-      //! @todo Switch to 'override' usage once 14.04 (Trusty) hits EOL. swig <3.0 doesn't understand C++11
-      virtual ~ControlSpin();
+      ~ControlSpin() override;
 
 #ifdef DOXYGEN_SHOULD_USE_THIS
       /// \ingroup python_xbmcgui_control_spin
@@ -799,8 +797,7 @@ namespace XBMCAddon
                   long alignment = XBFONT_LEFT, 
                   bool hasPath = false, long angle = 0);
 
-      //! @todo Switch to 'override' usage once 14.04 (Trusty) hits EOL. swig <3.0 doesn't understand C++11
-      virtual ~ControlLabel();
+      ~ControlLabel() override;
 
 #ifdef DOXYGEN_SHOULD_USE_THIS
       /// \ingroup python_xbmcgui_control_label
@@ -922,7 +919,7 @@ namespace XBMCAddon
     /// | XBFONT_JUSTIFIED  | 0x00000010 | Justify text
     /// @param focusTexture         [opt] string - filename for focus texture.
     /// @param noFocusTexture       [opt] string - filename for no focus texture.
-    /// @param isPassword           [opt] bool - True=mask text value with `****`.
+    /// @param isPassword           [opt] bool - True=mask text value with `****`(deprecated, use setType()).
     ///
     /// @note You can use the above as keywords for arguments and skip certain
     /// optional arguments.\n
@@ -933,6 +930,7 @@ namespace XBMCAddon
     ///
     ///
     ///-------------------------------------------------------------------------
+    /// @python_v18 Deprecated **isPassword**
     ///
     /// **Example:**
     /// ~~~~~~~~~~~~~{.py}
@@ -1081,6 +1079,43 @@ namespace XBMCAddon
 
       SWIGHIDDENVIRTUAL CGUIControl* Create() override;
 #endif
+
+      // setType() Method
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      /// \ingroup python_xbmcgui_control_edit
+      /// @brief \python_func{ setType(type, heading) }
+      ///-----------------------------------------------------------------------
+      /// Sets the type of this edit control.
+      ///
+      /// @param type              integer - type of the edit control.
+      /// | Param                            | Definition                                  |
+      /// |----------------------------------|:--------------------------------------------|
+      /// | xbmcgui.INPUT_TYPE_TEXT          | (standard keyboard)
+      /// | xbmcgui.INPUT_TYPE_NUMBER        | (format: #)
+      /// | xbmcgui.INPUT_TYPE_DATE          | (format: DD/MM/YYYY)
+      /// | xbmcgui.INPUT_TYPE_TIME          | (format: HH:MM)
+      /// | xbmcgui.INPUT_TYPE_IPADDRESS     | (format: #.#.#.#)
+      /// | xbmcgui.INPUT_TYPE_PASSWORD      | (input is masked)
+      /// | xbmcgui.INPUT_TYPE_PASSWORD_MD5  | (input is masked, return md5 hash of input)
+      /// | xbmcgui.INPUT_TYPE_SECONDS       | (format: SS or MM:SS or HH:MM:SS or MM min)
+      /// @param heading           string or unicode - heading that will be used for to numeric or
+      ///                                              keyboard dialog when the edit control is clicked.
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// self.edit.setType(xbmcgui.INPUT_TYPE_TIME, 'Please enter the time')
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      setType(...);
+#else
+      virtual void setType(int type, const String& heading);
+#endif
     };
     /// @}
 
@@ -1160,8 +1195,7 @@ namespace XBMCAddon
                   long _itemTextYOffset = CONTROL_TEXT_OFFSET_Y, long _itemHeight = 27, long _space = 2, 
                   long _alignmentY = XBFONT_CENTER_Y);
 
-      //! @todo Switch to 'override' usage once 14.04 (Trusty) hits EOL. swig <3.0 doesn't understand C++11
-      virtual ~ControlList();
+      ~ControlList() override;
 
 #ifdef DOXYGEN_SHOULD_USE_THIS
       /// \ingroup python_xbmcgui_control_list

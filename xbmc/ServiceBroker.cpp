@@ -20,7 +20,6 @@
 
 #include "ServiceBroker.h"
 #include "Application.h"
-#include "rendering/RenderSystem.h"
 #include "windowing/WinSystem.h"
 
 using namespace KODI;
@@ -154,8 +153,7 @@ CWinSystemBase& CServiceBroker::GetWinSystem()
 
 CRenderSystemBase& CServiceBroker::GetRenderSystem()
 {
-  CRenderSystemBase &renderSystem = dynamic_cast<CRenderSystemBase&>(g_application.m_ServiceManager->GetWinSystem());
-  return renderSystem;
+  return *g_application.m_ServiceManager->GetWinSystem().GetRenderSystem();
 }
 
 CPowerManager& CServiceBroker::GetPowerManager()
@@ -186,4 +184,21 @@ CProfilesManager& CServiceBroker::GetProfileManager()
 CEventLog& CServiceBroker::GetEventLog()
 {
   return g_application.m_ServiceManager->GetEventLog();
+}
+
+CGUIComponent* CServiceBroker::m_pGUI = nullptr;
+
+CGUIComponent* CServiceBroker::GetGUI()
+{
+  return m_pGUI;
+}
+
+void CServiceBroker::RegisterGUI(CGUIComponent *gui)
+{
+  m_pGUI = gui;
+}
+
+void CServiceBroker::UnregisterGUI()
+{
+  m_pGUI = nullptr;
 }

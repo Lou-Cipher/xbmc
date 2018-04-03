@@ -17,32 +17,31 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-
 #pragma once
 
-#include "EGL/egl.h"
-
-class CGLContextEGL
+// structure to hold multiple integer data
+// for storage referenced from a single integer
+class GUIInfo
 {
 public:
-  CGLContextEGL();
-  virtual ~CGLContextEGL();
-
-  bool CreateDisplay(EGLDisplay display,
-                     EGLint renderable_type,
-                     EGLint rendering_api);
-
-  bool CreateSurface(EGLNativeWindowType surface);
-  bool CreateContext();
-  bool BindContext();
-  bool SurfaceAttrib();
-  void Destroy();
-  void Detach();
-  bool SetVSync(bool enable);
-  void SwapBuffers();
-
-  EGLDisplay m_eglDisplay;
-  EGLSurface m_eglSurface;
-  EGLContext m_eglContext;
-  EGLConfig m_eglConfig;
+  GUIInfo(int info, uint32_t data1 = 0, int data2 = 0, uint32_t flag = 0)
+  {
+    m_info = info;
+    m_data1 = data1;
+    m_data2 = data2;
+    if (flag)
+      SetInfoFlag(flag);
+  }
+  bool operator ==(const GUIInfo &right) const
+  {
+    return (m_info == right.m_info && m_data1 == right.m_data1 && m_data2 == right.m_data2);
+  };
+  uint32_t GetInfoFlag() const;
+  uint32_t GetData1() const;
+  int GetData2() const;
+  int m_info;
+private:
+  void SetInfoFlag(uint32_t flag);
+  uint32_t m_data1;
+  int m_data2;
 };

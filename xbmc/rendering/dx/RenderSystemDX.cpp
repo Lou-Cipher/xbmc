@@ -285,31 +285,7 @@ void CRenderSystemDX::PresentRender(bool rendered, bool videoLayer)
     CD3DHelper::PSClearShaderResources(m_pContext);
   }
 
-  // time for decoder that may require the context
-  {
-    CSingleLock lock(m_decoderSection);
-    XbmcThreads::EndTime timer;
-    timer.Set(5);
-    while (!m_decodingTimer.IsTimePast() && !timer.IsTimePast())
-    {
-      m_decodingEvent.wait(lock, 1);
-    }
-  }
-
   PresentRenderImpl(rendered);
-}
-
-void CRenderSystemDX::RequestDecodingTime()
-{
-  CSingleLock lock(m_decoderSection);
-  m_decodingTimer.Set(3);
-}
-
-void CRenderSystemDX::ReleaseDecodingTime()
-{
-  CSingleLock lock(m_decoderSection);
-  m_decodingTimer.SetExpired();
-  m_decodingEvent.notify();
 }
 
 bool CRenderSystemDX::BeginRender()
@@ -680,6 +656,14 @@ void CRenderSystemDX::SetAlphaBlendEnable(bool enable)
   m_BlendEnabled = enable;
 }
 
+HANDLE CRenderSystemDX::GetContexMutex() const
+{
+  if (m_deviceResources)
+    return m_deviceResources->GetContexMutex();
+
+  return INVALID_HANDLE_VALUE;
+}
+
 CD3DTexture* CRenderSystemDX::GetBackBuffer()
 {
   if (m_stereoView == RENDER_STEREO_VIEW_RIGHT && m_rightEyeTex.Get())
@@ -742,7 +726,7 @@ void CRenderSystemDX::CheckDeviceCaps()
     texDesc.Format = DXGI_FORMAT_P016;
     if (SUCCEEDED(hr = d3d11Dev->CreateTexture2D(&texDesc, nullptr, nullptr)))
     {
-      //m_processorFormats.push_back(AV_PIX_FMT_P016);
+      m_processorFormats.push_back(AV_PIX_FMT_P016);
       if (isNotArm)
         m_processorFormats.push_back(AV_PIX_FMT_YUV420P16);
     }
@@ -766,7 +750,7 @@ void CRenderSystemDX::CheckDeviceCaps()
     texDesc.Format = DXGI_FORMAT_P016;
     if (SUCCEEDED(d3d11Dev->CreateTexture2D(&texDesc, nullptr, nullptr)))
     {
-      //m_sharedFormats.push_back(AV_PIX_FMT_P016);
+      m_sharedFormats.push_back(AV_PIX_FMT_P016);
       if (isNotArm)
         m_sharedFormats.push_back(AV_PIX_FMT_YUV420P16);
     }

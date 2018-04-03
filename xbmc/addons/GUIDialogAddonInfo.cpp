@@ -28,13 +28,13 @@
 #include "ServiceBroker.h"
 #include "filesystem/Directory.h"
 #include "addons/settings/GUIDialogAddonSettings.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAEDSP.h"
 #include "dialogs/GUIDialogContextMenu.h"
 #include "dialogs/GUIDialogSelect.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "games/GameUtils.h"
 #include "guilib/LocalizeStrings.h"
 #include "GUIUserMessages.h"
+#include "guilib/GUIComponent.h"
 #include "guilib/GUIWindowManager.h"
 #include "input/Key.h"
 #include "messaging/helpers/DialogHelper.h"
@@ -224,7 +224,7 @@ static const std::string LOCAL_CACHE = "\\0_local_cache"; // \0 to give it the l
 
 int CGUIDialogAddonInfo::AskForVersion(std::vector<std::pair<AddonVersion, std::string>>& versions)
 {
-  auto dialog = g_windowManager.GetWindow<CGUIDialogSelect>(WINDOW_DIALOG_SELECT);
+  auto dialog = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogSelect>(WINDOW_DIALOG_SELECT);
   dialog->Reset();
   dialog->SetHeading(CVariant{21338});
   dialog->SetUseDetails(true);
@@ -480,7 +480,7 @@ void CGUIDialogAddonInfo::OnSettings()
 
 bool CGUIDialogAddonInfo::ShowDependencyList(const std::vector<ADDON::DependencyInfo>& deps, bool reactivate)
 {
-  auto pDialog = g_windowManager.GetWindow<CGUIDialogSelect>(WINDOW_DIALOG_SELECT);
+  auto pDialog = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogSelect>(WINDOW_DIALOG_SELECT);
   CFileItemList items;
   for (auto& it : deps)
   {
@@ -555,7 +555,7 @@ bool CGUIDialogAddonInfo::ShowForItem(const CFileItemPtr& item)
   if (!item)
     return false;
 
-  CGUIDialogAddonInfo* dialog = g_windowManager.GetWindow<CGUIDialogAddonInfo>(WINDOW_DIALOG_ADDON_INFO);
+  CGUIDialogAddonInfo* dialog = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogAddonInfo>(WINDOW_DIALOG_ADDON_INFO);
   if (!dialog)
     return false;
   if (!dialog->SetItem(item))

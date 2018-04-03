@@ -38,6 +38,7 @@
 #include "utils/AlarmClock.h"
 #include "LangInfo.h"
 #include "utils/SystemInfo.h"
+#include "guilib/GUIComponent.h"
 #include "guilib/GUITextBox.h"
 #include "guilib/GUIControlGroupList.h"
 #include "pictures/GUIWindowSlideShow.h"
@@ -104,7 +105,6 @@
 #include "music/MusicThumbLoader.h"
 #include "video/VideoDatabase.h"
 #include "cores/IPlayer.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAEDSP.h"
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "cores/VideoPlayer/VideoRenderers/BaseRenderer.h"
 #include "interfaces/info/InfoExpression.h"
@@ -540,8 +540,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.SeekOffset(format)`</b>,
 ///                  \anchor Player_SeekOffset_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). Also supported: (hh:mm)\,
-///     (mm:ss)\, (hh:mm:ss)\, (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.SeekStepSize`</b>,
 ///                  \anchor Player_SeekStepSize
@@ -556,9 +558,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.TimeRemaining(format)`</b>,
 ///                  \anchor Player_TimeRemaining_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is
-///     used (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\,
-///     (hh:mm:ss)\, (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.TimeSpeed`</b>,
 ///                  \anchor Player_TimeSpeed
@@ -573,9 +576,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.Time(format)`</b>,
 ///                  \anchor Player_Time_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is
-///     used (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\,
-///     (hh:mm:ss)\, (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.Duration`</b>,
 ///                  \anchor Player_Duration
@@ -585,9 +589,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.Duration(format)`</b>,
 ///                  \anchor Player_Duration_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
-///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\,
-///     (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.FinishTime`</b>,
 ///                  \anchor Player_FinishTime
@@ -597,9 +602,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.FinishTime(format)`</b>,
 ///                  \anchor Player_FinishTime_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is
-///     used (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\,
-///     (hh:mm:ss)\, (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.StartTime`</b>,
 ///                  \anchor Player_StartTime
@@ -609,9 +615,10 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///   \table_row3{   <b>`Player.StartTime(format)`</b>,
 ///                  \anchor Player_StartTime_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is
-///     used (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\,
-///     (hh:mm:ss)\, (hh:mm:ss).
+///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`Player.SeekNumeric`</b>,
 ///                  \anchor Player_SeekNumeric
@@ -622,8 +629,9 @@ const infomap player_param[] =   {{ "art",              PLAYER_ITEM_ART }};
 ///                  \anchor Player_SeekNumeric_format
 ///                  _string_,
 ///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
-///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\,
-///     (hh:mm:ss).
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 /// \table_end
 ///
@@ -775,12 +783,6 @@ const infomap weather[] =        {{ "isfetched",        WEATHER_IS_FETCHED },
 ///                  _boolean_,
 ///     Returns true if at least one pvr client addon is installed and enabled.
 ///   }
-///   \table_row3{   <b>`System.HasADSP`</b>,
-///                  \anchor System_HasADSP
-///                  _boolean_,
-///     Returns true if ADSP is supported from Kodi
-///     \note normally always true
-///   }
 ///   \table_row3{   <b>`System.HasCMS`</b>,
 ///                  \anchor System_HasCMS
 ///                  _boolean_,
@@ -899,9 +901,10 @@ const infomap weather[] =        {{ "isfetched",        WEATHER_IS_FETCHED },
 ///   \table_row3{   <b>`System.Time(format)`</b>,
 ///                  \anchor System_Time_format
 ///                  _string_,
-///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is
-///     used (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\,
-///     (hh:mm:ss)\, (hh:mm:ss). (xx) option added after dharma
+///     Returns hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`System.Date`</b>,
 ///                  \anchor System_Date
@@ -1212,7 +1215,6 @@ const infomap system_labels[] =  {{ "hasnetwork",       SYSTEM_ETHERNET_LINK_ACT
                                   { "haspvr",           SYSTEM_HAS_PVR },
                                   { "startupwindow",    SYSTEM_STARTUP_WINDOW },
                                   { "stereoscopicmode", SYSTEM_STEREOSCOPIC_MODE },
-                                  { "hasadsp",          SYSTEM_HAS_ADSP },
                                   { "hascms",           SYSTEM_HAS_CMS },
                                   { "privacypolicy",    SYSTEM_PRIVACY_POLICY },
                                   { "haspvraddon",      SYSTEM_HAS_PVR_ADDON }};
@@ -3323,8 +3325,17 @@ const infomap container_str[]  = {{ "property",         CONTAINER_PROPERTY },
 ///   \table_row3{   <b>`ListItem.Duration`</b>,
 ///                  \anchor ListItem_Duration
 ///                  _string_,
-///     Returns the song or movie duration of the currently selected movie in a
-///     container
+///     Returns the duration of the currently selected item in a container
+///     in the format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`ListItem.Duration(format)`</b>,
+///                  \anchor ListItem.Duration_format
+///                  _string_,
+///     Returns the duration of the currently selected item in a container in
+///     different formats: hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 ///   \table_row3{   <b>`ListItem.DBTYPE`</b>,
 ///                  \anchor ListItem_DBTYPE
@@ -4252,46 +4263,6 @@ const infomap playlist[] =       {{ "length",           PLAYLIST_LENGTH },
 ///                  _boolean_,
 ///     Returns true if there are timers present who currently not do recording
 ///   }
-///   \table_row3{   <b>`PVR.NowRecordingTitle`</b>,
-///                  \anchor PVR_NowRecordingTitle
-///                  _string_,
-///     Title of the programme being recorded
-///   }
-///   \table_row3{   <b>`PVR.NowRecordingDateTime`</b>,
-///                  \anchor PVR_NowRecordingDateTime
-///                  _Date/Time string_,
-///     Start date and time of the current recording
-///   }
-///   \table_row3{   <b>`PVR.NowRecordingChannel`</b>,
-///                  \anchor PVR_NowRecordingChannel
-///                  _string_,
-///     Channel name of the current recording
-///   }
-///   \table_row3{   <b>`PVR.NowRecordingChannelIcon`</b>,
-///                  \anchor PVR_NowRecordingChannelIcon
-///                  _string_,
-///     Icon of the current recording channel
-///   }
-///   \table_row3{   <b>`PVR.NextRecordingTitle`</b>,
-///                  \anchor PVR_NextRecordingTitle
-///                  _string_,
-///     Title of the next programme that will be recorded
-///   }
-///   \table_row3{   <b>`PVR.NextRecordingDateTime`</b>,
-///                  \anchor PVR_NextRecordingDateTime
-///                  _Date/Time string_,
-///     Start date and time of the next recording
-///   }
-///   \table_row3{   <b>`PVR.NextRecordingChannel`</b>,
-///                  \anchor PVR_NextRecordingChannel
-///                  _string_,
-///     Channel name of the next recording
-///   }
-///   \table_row3{   <b>`PVR.NextRecordingChannelIcon`</b>,
-///                  \anchor PVR_NextRecordingChannelIcon
-///                  _string_,
-///     Icon of the next recording channel
-///   }
 ///   \table_row3{   <b>`PVR.BackendName`</b>,
 ///                  \anchor PVR_BackendName
 ///                  _string_,
@@ -4371,31 +4342,6 @@ const infomap playlist[] =       {{ "length",           PLAYLIST_LENGTH },
 ///                  \anchor PVR_IsPlayingEpgTag
 ///                  _boolean_,
 ///     Returns true when an epg tag is being watched.
-///   }
-///   \table_row3{   <b>`PVR.EpgEventDuration`</b>,
-///                  \anchor PVR_EpgEventDuration
-///                  _string_,
-///     Returns the duration of the currently playing epg event
-///   }
-///   \table_row3{   <b>`PVR.EpgEventElapsedTime`</b>,
-///                  \anchor PVR_EpgEventElapsedTime
-///                  _string_,
-///     Returns the time of the current position of the currently playing epg event
-///   }
-///   \table_row3{   <b>`PVR.EpgEventRemainingTime`</b>,
-///                  \anchor PVR_EpgEventRemainingTime
-///                  _string_,
-///     Returns the remaining time for currently playing epg event
-///   }
-///   \table_row3{   <b>`PVR.EpgEventSeekTime`</b>,
-///                  \anchor PVR_EpgEventSeekTime
-///                  _string_,
-///     Returns the time the user is seeking within the currently playing epg event
-///   }
-///   \table_row3{   <b>`PVR.EpgEventFinishTime`</b>,
-///                  \anchor PVR_EpgEventFinishTime
-///                  _string_,
-///     Returns the time the currently playing epg event will end
 ///   }
 ///   \table_row3{   <b>`PVR.EpgEventProgress`</b>,
 ///                  \anchor PVR_EpgEventProgress
@@ -4477,30 +4423,50 @@ const infomap playlist[] =       {{ "length",           PLAYLIST_LENGTH },
 ///                  _boolean_,
 ///     Returns true when for channel is timeshift available
 ///   }
-///   \table_row3{   <b>`PVR.TimeShiftStart`</b>,
-///                  \anchor PVR_TimeShiftStart
-///                  _time string_,
-///     Start position of the timeshift
-///   }
-///   \table_row3{   <b>`PVR.TimeShiftEnd`</b>,
-///                  \anchor PVR_TimeShiftEnd
-///                  _time string_,
-///     End position of the timeshift
-///   }
-///   \table_row3{   <b>`PVR.TimeShiftCur`</b>,
-///                  \anchor PVR_TimeShiftCur
-///                  _time string_,
-///     Current position of the timeshift
-///   }
 ///   \table_row3{   <b>`PVR.TimeShiftProgress`</b>,
 ///                  \anchor PVR_TimeShiftProgress
 ///                  _integer_,
 ///     Returns the position of currently timeshifted title on TV as integer
 ///   }
-///   \table_row3{   <b>`PVR.TimeShiftOffset`</b>,
-///                  \anchor PVR_TimeShiftOffset
-///                  _integer_,
-///     Returns the delta of timeshifted time to actual time
+///   \table_row3{   <b>`PVR.NowRecordingTitle`</b>,
+///                  \anchor PVR_NowRecordingTitle
+///                  _string_,
+///     Title of the programme being recorded
+///   }
+///   \table_row3{   <b>`PVR.NowRecordingDateTime`</b>,
+///                  \anchor PVR_NowRecordingDateTime
+///                  _Date/Time string_,
+///     Start date and time of the current recording
+///   }
+///   \table_row3{   <b>`PVR.NowRecordingChannel`</b>,
+///                  \anchor PVR_NowRecordingChannel
+///                  _string_,
+///     Channel name of the current recording
+///   }
+///   \table_row3{   <b>`PVR.NowRecordingChannelIcon`</b>,
+///                  \anchor PVR_NowRecordingChannelIcon
+///                  _string_,
+///     Icon of the current recording channel
+///   }
+///   \table_row3{   <b>`PVR.NextRecordingTitle`</b>,
+///                  \anchor PVR_NextRecordingTitle
+///                  _string_,
+///     Title of the next programme that will be recorded
+///   }
+///   \table_row3{   <b>`PVR.NextRecordingDateTime`</b>,
+///                  \anchor PVR_NextRecordingDateTime
+///                  _Date/Time string_,
+///     Start date and time of the next recording
+///   }
+///   \table_row3{   <b>`PVR.NextRecordingChannel`</b>,
+///                  \anchor PVR_NextRecordingChannel
+///                  _string_,
+///     Channel name of the next recording
+///   }
+///   \table_row3{   <b>`PVR.NextRecordingChannelIcon`</b>,
+///                  \anchor PVR_NextRecordingChannelIcon
+///                  _string_,
+///     Icon of the next recording channel
 ///   }
 ///   \table_row3{   <b>`PVR.TVNowRecordingTitle`</b>,
 ///                  \anchor PVR_TVNowRecordingTitle
@@ -4636,14 +4602,6 @@ const infomap pvr[] =            {{ "isrecording",              PVR_IS_RECORDING
                                   { "hastvchannels",            PVR_HAS_TV_CHANNELS },
                                   { "hasradiochannels",         PVR_HAS_RADIO_CHANNELS },
                                   { "hasnonrecordingtimer",     PVR_HAS_NONRECORDING_TIMER },
-                                  { "nowrecordingtitle",        PVR_NOW_RECORDING_TITLE },
-                                  { "nowrecordingdatetime",     PVR_NOW_RECORDING_DATETIME },
-                                  { "nowrecordingchannel",      PVR_NOW_RECORDING_CHANNEL },
-                                  { "nowrecordingchannelicon",  PVR_NOW_RECORDING_CHAN_ICO },
-                                  { "nextrecordingtitle",       PVR_NEXT_RECORDING_TITLE },
-                                  { "nextrecordingdatetime",    PVR_NEXT_RECORDING_DATETIME },
-                                  { "nextrecordingchannel",     PVR_NEXT_RECORDING_CHANNEL },
-                                  { "nextrecordingchannelicon", PVR_NEXT_RECORDING_CHAN_ICO },
                                   { "backendname",              PVR_BACKEND_NAME },
                                   { "backendversion",           PVR_BACKEND_VERSION },
                                   { "backendhost",              PVR_BACKEND_HOST },
@@ -4660,11 +4618,6 @@ const infomap pvr[] =            {{ "isrecording",              PVR_IS_RECORDING
                                   { "isplayingradio",           PVR_IS_PLAYING_RADIO },
                                   { "isplayingrecording",       PVR_IS_PLAYING_RECORDING },
                                   { "isplayingepgtag",          PVR_IS_PLAYING_EPGTAG },
-                                  { "epgeventduration",         PVR_EPG_EVENT_DURATION },
-                                  { "epgeventelapsedtime",      PVR_EPG_EVENT_ELAPSED_TIME },
-                                  { "epgeventremainingtime",    PVR_EPG_EVENT_REMAINING_TIME },
-                                  { "epgeventfinishtime",       PVR_EPG_EVENT_FINISH_TIME },
-                                  { "epgeventseektime",         PVR_EPG_EVENT_SEEK_TIME },
                                   { "epgeventprogress",         PVR_EPG_EVENT_PROGRESS },
                                   { "actstreamclient",          PVR_ACTUAL_STREAM_CLIENT },
                                   { "actstreamdevice",          PVR_ACTUAL_STREAM_DEVICE },
@@ -4681,11 +4634,7 @@ const infomap pvr[] =            {{ "isrecording",              PVR_IS_RECORDING
                                   { "actstreammux",             PVR_ACTUAL_STREAM_MUX },
                                   { "actstreamprovidername",    PVR_ACTUAL_STREAM_PROVIDER },
                                   { "istimeshift",              PVR_IS_TIMESHIFTING },
-                                  { "timeshiftstart",           PVR_TIMESHIFT_START_TIME },
-                                  { "timeshiftend",             PVR_TIMESHIFT_END_TIME },
-                                  { "timeshiftcur",             PVR_TIMESHIFT_PLAY_TIME },
                                   { "timeshiftprogress",        PVR_TIMESHIFT_PROGRESS },
-                                  { "timeshiftoffset",          PVR_TIMESHIFT_OFFSET },
                                   { "nowrecordingtitle",        PVR_NOW_RECORDING_TITLE },
                                   { "nowrecordingdatetime",     PVR_NOW_RECORDING_DATETIME },
                                   { "nowrecordingchannel",      PVR_NOW_RECORDING_CHANNEL },
@@ -4721,99 +4670,158 @@ const infomap pvr[] =            {{ "isrecording",              PVR_IS_RECORDING
                                   { "isrecordingplayingchannel",  PVR_IS_RECORDING_PLAYING_CHANNEL }};
 
 /// \page modules__General__List_of_gui_access
-/// \section modules__General__List_of_gui_access_ADSP ADSP
+/// \section modules__General__List_of_gui_access_PvrTimes PvrTimes
 /// @{
 /// \table_start
 ///   \table_h3{ Labels, Type, Description }
-///   \table_row3{   <b>`ADSP.IsActive`</b>,
-///                  \anchor ADSP_IsActive
-///                  _boolean_,
-///     Returns true if dsp system is enabled
-///   }
-///   \table_row3{   <b>`ADSP.HasModes`</b>,
-///                  \anchor ADSP_HasModes
-///                  _boolean_,
-///     Returns true if one or more modes are present on any of the types
-///   }
-///   \table_row3{   <b>`ADSP.HasInputResample`</b>,
-///                  \anchor ADSP_HasInputResample
-///                  _boolean_,
-///     Returns true if on stream is a input resample is active
-///   }
-///   \table_row3{   <b>`ADSP.HasPreProcess`</b>,
-///                  \anchor ADSP_HasPreProcess
-///                  _boolean_,
-///     Returns true if on stream is a pre process mode active
-///   }
-///   \table_row3{   <b>`ADSP.HasMasterProcess`</b>,
-///                  \anchor ADSP_HasMasterProcess
-///                  _boolean_,
-///     Returns true if on stream is a master process mode available
-///   }
-///   \table_row3{   <b>`ADSP.HasPostProcess`</b>,
-///                  \anchor ADSP_HasPostProcess
-///                  _boolean_,
-///     Returns true if on stream is a post process
-///   }
-///   \table_row3{   <b>`ADSP.HasOutputResample`</b>,
-///                  \anchor ADSP_HasOutputResample
-///                  _boolean_,
-///     Returns true if on stream is a output resample
-///   }
-///   \table_row3{   <b>`ADSP.MasterActive`</b>,
-///                  \anchor ADSP_MasterActive
-///                  _boolean_,
-///     Returns true if on stream is a master mode selected and active
-///   }
-///   \table_row3{   <b>`ADSP.ActiveStreamType`</b>,
-///                  \anchor ADSP_ActiveStreamType
+///   \table_row3{   <b>`PVR.EpgEventDuration`</b>,
+///                  \anchor PVR_EpgEventDuration
 ///                  _string_,
-///     From user wanted and selected stream type\, e.g. music or video
+///     Returns the duration of the currently playing epg event in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
 ///   }
-///   \table_row3{   <b>`ADSP.DetectedStreamType`</b>,
-///                  \anchor ADSP_DetectedStreamType
+///   \table_row3{   <b>`PVR.EpgEventDuration(format)`</b>,
+///                  \anchor PVR_EpgEventDuration_format
 ///                  _string_,
-///     From Kodi detected stream type
+///     Returns the duration of the currently playing epg event in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
-///   \table_row3{   <b>`ADSP.MasterName`</b>,
-///                  \anchor ADSP_MasterName
+///   \table_row3{   <b>`PVR.EpgEventElapsedTime`</b>,
+///                  \anchor PVR_EpgEventElapsedTime
 ///                  _string_,
-///     Name of the currently selected and used master dsp mode
+///     Returns the time of the current position of the currently playing epg event in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
 ///   }
-///   \table_row3{   <b>`ADSP.MasterInfo`</b>,
-///                  \anchor ADSP_MasterInfo
+///   \table_row3{   <b>`PVR.EpgEventElapsedTime(format)`</b>,
+///                  \anchor PVR_EpgEventElapsedTime_format
 ///                  _string_,
-///     Continues updated information label of master mode (if available)
+///     Returns the time of the current position of the currently playing epg event in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
-///   \table_row3{   <b>`ADSP.MasterOwnIcon`</b>,
-///                  \anchor ADSP_MasterOwnIcon
+///   \table_row3{   <b>`PVR.EpgEventRemainingTime`</b>,
+///                  \anchor PVR_EpgEventRemainingTime
 ///                  _string_,
-///     Icon to use for selected master mode
+///     Returns the remaining time for currently playing epg event in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
 ///   }
-///   \table_row3{   <b>`ADSP.MasterOverrideIcon`</b>,
-///                  \anchor ADSP_MasterOverrideIcon
+///   \table_row3{   <b>`PVR.EpgEventRemainingTime(format)`</b>,
+///                  \anchor PVR_EpgEventRemainingTime_format
 ///                  _string_,
-///     Icon to override Kodi's codec icon with one of add-on\, e.g. Dolby
-///     Digital EX on Dolby Digital
+///     Returns the remaining time for currently playing epg event in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.EpgEventSeekTime`</b>,
+///                  \anchor PVR_EpgEventSeekTime
+///                  _string_,
+///     Returns the time the user is seeking within the currently playing epg event in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.EpgEventSeekTime(format)`</b>,
+///                  \anchor PVR_EpgEventSeekTime_format
+///                  _string_,
+///     Returns the time the user is seeking within the currently playing epg event in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.EpgEventFinishTime`</b>,
+///                  \anchor PVR_EpgEventFinishTime
+///                  _string_,
+///     Returns the time the currently playing epg event will end in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.EpgEventFinishTime(format)`</b>,
+///                  \anchor PVR_EpgEventFinishTime_format
+///                  _string_,
+///     Returns the time the currently playing epg event will end in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftStart`</b>,
+///                  \anchor PVR_TimeShiftStart
+///                  _string_,
+///     Returns the start time of the timeshift buffer in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftStart(format)`</b>,
+///                  \anchor PVR_TimeShiftStart_format
+///                  _string_,
+///     Returns the start time of the timeshift buffer in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftEnd`</b>,
+///                  \anchor PVR_TimeShiftEnd
+///                  _string_,
+///     Returns the end time of the timeshift buffer in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftEnd(format)`</b>,
+///                  \anchor PVR_TimeShiftEnd_format
+///                  _string_,
+///     Returns the end time of the timeshift buffer in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftCur`</b>,
+///                  \anchor PVR_TimeShiftCur
+///                  _string_,
+///     Returns the current playback time within the timeshift buffer in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftCur(format)`</b>,
+///                  \anchor PVR_TimeShiftCur_format
+///                  _string_,
+///     Returns the current playback time within the timeshift buffer in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss). When 12 hour clock is used
+///     (xx) will return AM/PM. Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftOffset`</b>,
+///                  \anchor PVR_TimeShiftOffset
+///                  _string_,
+///     Returns the delta of timeshifted time to actual time in the
+///     format hh:mm:ss. hh: will be omitted if hours value is zero.
+///   }
+///   \table_row3{   <b>`PVR.TimeShiftOffset(format)`</b>,
+///                  \anchor PVR_TimeShiftOffset_format
+///                  _string_,
+///     Returns the delta of timeshifted time to actual time in different formats:
+///     Hours (hh)\, minutes (mm) or seconds (ss).
+///     Also supported: (hh:mm)\, (mm:ss)\, (hh:mm:ss)\, (h:mm:ss).
+///     Added with Leia: (secs)\, (mins)\, (hours) for total time values.
+///     Example: 3661 seconds => hh=1\, mm=1\, ss=1\, hours=1\, mins=61\, secs=3661
 ///   }
 /// \table_end
 ///
 /// -----------------------------------------------------------------------------
 /// @}
-const infomap adsp[] =           {{ "isactive",                 ADSP_IS_ACTIVE },
-                                  { "hasmodes",                 ADSP_HAS_MODES },
-                                  { "hasinputresample",         ADSP_HAS_INPUT_RESAMPLE },
-                                  { "haspreprocess",            ADSP_HAS_PRE_PROCESS },
-                                  { "hasmasterprocess",         ADSP_HAS_MASTER_PROCESS },
-                                  { "haspostprocess",           ADSP_HAS_POST_PROCESS },
-                                  { "hasoutputresample",        ADSP_HAS_OUTPUT_RESAMPLE },
-                                  { "masteractive",             ADSP_MASTER_ACTIVE },
-                                  { "activestreamtype",         ADSP_ACTIVE_STREAM_TYPE },
-                                  { "detectedstreamtype",       ADSP_DETECTED_STREAM_TYPE },
-                                  { "mastername",               ADSP_MASTER_NAME },
-                                  { "masterinfo",               ADSP_MASTER_INFO },
-                                  { "masterownicon",            ADSP_MASTER_OWN_ICON },
-                                  { "masteroverrideicon",       ADSP_MASTER_OVERRIDE_ICON }};
+const infomap pvr_times[] =      {{ "epgeventduration",       PVR_EPG_EVENT_DURATION },
+                                  { "epgeventelapsedtime",    PVR_EPG_EVENT_ELAPSED_TIME },
+                                  { "epgeventremainingtime",  PVR_EPG_EVENT_REMAINING_TIME },
+                                  { "epgeventfinishtime",     PVR_EPG_EVENT_FINISH_TIME },
+                                  { "epgeventseektime",       PVR_EPG_EVENT_SEEK_TIME },
+                                  { "timeshiftstart",         PVR_TIMESHIFT_START_TIME },
+                                  { "timeshiftend",           PVR_TIMESHIFT_END_TIME },
+                                  { "timeshiftcur",           PVR_TIMESHIFT_PLAY_TIME },
+                                  { "timeshiftoffset",        PVR_TIMESHIFT_OFFSET }};
 
 /// \page modules__General__List_of_gui_access
 /// \section modules__General__List_of_gui_access_RDS Radio RDS
@@ -5791,13 +5799,10 @@ int CGUIInfoManager::TranslateSingleString(const std::string &strCondition, bool
         if (prop.name == pvr[i].str)
           return pvr[i].val;
       }
-    }
-    else if (cat.name == "adsp")
-    {
-      for (size_t i = 0; i < sizeof(adsp) / sizeof(infomap); i++)
+      for (size_t i = 0; i < sizeof(pvr_times) / sizeof(infomap); i++)
       {
-        if (prop.name == adsp[i].str)
-          return adsp[i].val;
+        if (prop.name == pvr_times[i].str)
+          return AddMultiInfo(GUIInfo(pvr_times[i].val, TranslateTimeFormat(prop.param())));
       }
     }
     else if (cat.name == "rds")
@@ -5910,6 +5915,8 @@ int CGUIInfoManager::TranslateListItem(const Property &info)
       return AddListItemProp(info.param(), LISTITEM_VOTES_OFFSET);
     if (info.name == "ratingandvotes")
       return AddListItemProp(info.param(), LISTITEM_RATING_AND_VOTES_OFFSET);
+    if (info.name == "duration")
+      return AddListItemProp(info.param(), LISTITEM_DURATION_OFFSET);
   }
 
   for (size_t i = 0; i < sizeof(listitem_labels) / sizeof(infomap); i++) // these ones don't have or need an id
@@ -5944,6 +5951,9 @@ TIME_FORMAT CGUIInfoManager::TranslateTimeFormat(const std::string &format)
   else if (StringUtils::EqualsNoCase(format, "h:mm:ss")) return TIME_FORMAT_H_MM_SS;
   else if (StringUtils::EqualsNoCase(format, "h:mm:ss xx")) return TIME_FORMAT_H_MM_SS_XX;
   else if (StringUtils::EqualsNoCase(format, "xx")) return TIME_FORMAT_XX;
+  else if (StringUtils::EqualsNoCase(format, "secs")) return TIME_FORMAT_SECS;
+  else if (StringUtils::EqualsNoCase(format, "mins")) return TIME_FORMAT_MINS;
+  else if (StringUtils::EqualsNoCase(format, "hours")) return TIME_FORMAT_HOURS;
   return TIME_FORMAT_GUESS;
 }
 
@@ -6000,14 +6010,6 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
 
   switch (info)
   {
-  case PVR_NEXT_RECORDING_CHANNEL:
-  case PVR_NEXT_RECORDING_CHAN_ICO:
-  case PVR_NEXT_RECORDING_DATETIME:
-  case PVR_NEXT_RECORDING_TITLE:
-  case PVR_NOW_RECORDING_CHANNEL:
-  case PVR_NOW_RECORDING_CHAN_ICO:
-  case PVR_NOW_RECORDING_DATETIME:
-  case PVR_NOW_RECORDING_TITLE:
   case PVR_BACKEND_NAME:
   case PVR_BACKEND_VERSION:
   case PVR_BACKEND_HOST:
@@ -6019,10 +6021,6 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
   case PVR_BACKEND_NUMBER:
   case PVR_TOTAL_DISKSPACE:
   case PVR_NEXT_TIMER:
-  case PVR_EPG_EVENT_DURATION:
-  case PVR_EPG_EVENT_ELAPSED_TIME:
-  case PVR_EPG_EVENT_REMAINING_TIME:
-  case PVR_EPG_EVENT_FINISH_TIME:
   case PVR_EPG_EVENT_PROGRESS:
   case PVR_ACTUAL_STREAM_CLIENT:
   case PVR_ACTUAL_STREAM_DEVICE:
@@ -6037,10 +6035,14 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
   case PVR_ACTUAL_STREAM_SERVICE:
   case PVR_ACTUAL_STREAM_MUX:
   case PVR_ACTUAL_STREAM_PROVIDER:
-  case PVR_TIMESHIFT_START_TIME:
-  case PVR_TIMESHIFT_END_TIME:
-  case PVR_TIMESHIFT_PLAY_TIME:
-  case PVR_TIMESHIFT_OFFSET:
+  case PVR_NOW_RECORDING_TITLE:
+  case PVR_NOW_RECORDING_CHANNEL:
+  case PVR_NOW_RECORDING_CHAN_ICO:
+  case PVR_NOW_RECORDING_DATETIME:
+  case PVR_NEXT_RECORDING_TITLE:
+  case PVR_NEXT_RECORDING_CHANNEL:
+  case PVR_NEXT_RECORDING_CHAN_ICO:
+  case PVR_NEXT_RECORDING_DATETIME:
   case PVR_TV_NOW_RECORDING_TITLE:
   case PVR_TV_NOW_RECORDING_CHANNEL:
   case PVR_TV_NOW_RECORDING_CHAN_ICO:
@@ -6057,10 +6059,7 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
   case PVR_RADIO_NEXT_RECORDING_CHANNEL:
   case PVR_RADIO_NEXT_RECORDING_CHAN_ICO:
   case PVR_RADIO_NEXT_RECORDING_DATETIME:
-    CServiceBroker::GetPVRManager().TranslateCharInfo(info, strLabel);
-    break;
-  case PVR_EPG_EVENT_SEEK_TIME:
-    CServiceBroker::GetPVRManager().GetSeekTimeLabel(g_application.GetAppPlayer().GetSeekHandler().GetSeekSize(), strLabel);
+    CServiceBroker::GetPVRManager().TranslateCharInfo(m_currentFile, info, strLabel);
     break;
   case PVR_CHANNEL_NUMBER_INPUT:
     strLabel = CServiceBroker::GetPVRManager().GUIActions()->GetChannelNumberInputHandler().GetChannelNumberAsString();
@@ -6583,14 +6582,14 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
     strLabel = StringUtils::Format("%i", g_graphicsContext.GetResInfo().iScreenHeight);
     break;
   case SYSTEM_CURRENT_WINDOW:
-    return g_localizeStrings.Get(g_windowManager.GetActiveWindowOrDialog());
+    return g_localizeStrings.Get(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindowOrDialog());
   case SYSTEM_STARTUP_WINDOW:
     strLabel = StringUtils::Format("%i", CServiceBroker::GetSettings().GetInt(CSettings::SETTING_LOOKANDFEEL_STARTUPWINDOW));
     break;
   case SYSTEM_CURRENT_CONTROL:
   case SYSTEM_CURRENT_CONTROL_ID:
     {
-      CGUIWindow *window = g_windowManager.GetWindow(g_windowManager.GetActiveWindowOrDialog());
+      CGUIWindow *window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindowOrDialog());
       if (window)
       {
         CGUIControl *control = window->GetFocusedControl();
@@ -6727,7 +6726,7 @@ std::string CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *
   case VISUALISATION_PRESET:
     {
       CGUIMessage msg(GUI_MSG_GET_VISUALISATION, 0, 0);
-      g_windowManager.SendMessage(msg);
+      CServiceBroker::GetGUI()->GetWindowManager().SendMessage(msg);
       if (msg.GetPointer())
       {
         CGUIVisualisationControl* viz = static_cast<CGUIVisualisationControl*>(msg.GetPointer());
@@ -6852,7 +6851,7 @@ bool CGUIInfoManager::GetInt(int &value, int info, int contextWindow, const CGUI
       }
     case SYSTEM_PROGRESS_BAR:
       {
-        CGUIDialogProgress *bar = g_windowManager.GetWindow<CGUIDialogProgress>(WINDOW_DIALOG_PROGRESS);
+        CGUIDialogProgress *bar = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogProgress>(WINDOW_DIALOG_PROGRESS);
         if (bar && bar->IsDialogRunning())
           value = bar->GetPercentage();
         return true;
@@ -6871,7 +6870,7 @@ bool CGUIInfoManager::GetInt(int &value, int info, int contextWindow, const CGUI
     case PVR_ACTUAL_STREAM_SNR_PROGR:
     case PVR_BACKEND_DISKSPACE_PROGR:
     case PVR_TIMESHIFT_PROGRESS:
-      value = CServiceBroker::GetPVRManager().TranslateIntInfo(*m_currentFile, info);
+      value = CServiceBroker::GetPVRManager().TranslateIntInfo(m_currentFile, info);
       return true;
     case SYSTEM_BATTERY_LEVEL:
       value = CServiceBroker::GetPowerManager().BatteryLevel();
@@ -6981,7 +6980,7 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         break;
       case WINDOW_IS_MEDIA:
         { // note: This doesn't return true for dialogs (content, favourites, login, videoinfo)
-          CGUIWindow *pWindow = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
+          CGUIWindow *pWindow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow());
           bReturn = (pWindow && pWindow->IsMediaWindow());
         }
         break;
@@ -7095,9 +7094,6 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
           bReturn = (pvrAddons.size() > 0);
         }
         break;
-      case SYSTEM_HAS_ADSP:
-        bReturn = true;
-        break;
       case SYSTEM_HAS_CMS:
 #if defined(HAS_GL) || defined(HAS_DX)
         bReturn = true;
@@ -7121,7 +7117,7 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         bReturn = (CServiceBroker::GetSettings().GetInt(CSettings::SETTING_POWERMANAGEMENT_SHUTDOWNTIME) > 0);
         break;
       case SYSTEM_LOGGEDON:
-        bReturn = !(g_windowManager.GetActiveWindow() == WINDOW_LOGIN_SCREEN);
+        bReturn = !(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow() == WINDOW_LOGIN_SCREEN);
         break;
       case SYSTEM_SHOW_EXIT_BUTTON:
         bReturn = g_advancedSettings.m_showExitButton;
@@ -7130,10 +7126,10 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         bReturn = profileManager.UsingLoginScreen();
         break;
       case SYSTEM_HAS_ACTIVE_MODAL_DIALOG:
-        bReturn = g_windowManager.HasModalDialog();
+        bReturn = CServiceBroker::GetGUI()->GetWindowManager().HasModalDialog();
         break;
       case SYSTEM_HAS_VISIBLE_MODAL_DIALOG:
-        bReturn = g_windowManager.HasVisibleModalDialog();
+        bReturn = CServiceBroker::GetGUI()->GetWindowManager().HasVisibleModalDialog();
         break;
       case WEATHER_IS_FETCHED:
         bReturn = CServiceBroker::GetWeatherManager().IsFetched();
@@ -7146,8 +7142,8 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         break;
       case SYSTEM_HAS_INPUT_HIDDEN:
         {
-          CGUIDialogNumeric *pNumeric = g_windowManager.GetWindow<CGUIDialogNumeric>(WINDOW_DIALOG_NUMERIC);
-          CGUIDialogKeyboardGeneric *pKeyboard = g_windowManager.GetWindow<CGUIDialogKeyboardGeneric>(WINDOW_DIALOG_KEYBOARD);
+          CGUIDialogNumeric *pNumeric = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogNumeric>(WINDOW_DIALOG_NUMERIC);
+          CGUIDialogKeyboardGeneric *pKeyboard = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogKeyboardGeneric>(WINDOW_DIALOG_KEYBOARD);
 
           if (pNumeric && pNumeric->IsActive())
             bReturn = pNumeric->IsInputHidden();
@@ -7231,25 +7227,25 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         break;
       case SLIDESHOW_ISPAUSED:
         {
-          CGUIWindowSlideShow *slideShow = g_windowManager.GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
+          CGUIWindowSlideShow *slideShow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
           bReturn = (slideShow && slideShow->IsPaused());
         }
         break;
       case SLIDESHOW_ISRANDOM:
         {
-          CGUIWindowSlideShow *slideShow = g_windowManager.GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
+          CGUIWindowSlideShow *slideShow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
           bReturn = (slideShow && slideShow->IsShuffled());
         }
         break;
       case SLIDESHOW_ISACTIVE:
         {
-          CGUIWindowSlideShow *slideShow = g_windowManager.GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
+          CGUIWindowSlideShow *slideShow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
           bReturn = (slideShow && slideShow->InSlideShow());
         }
         break;
       case SLIDESHOW_ISVIDEO:
         {
-          CGUIWindowSlideShow *slideShow = g_windowManager.GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
+          CGUIWindowSlideShow *slideShow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
           bReturn = (slideShow && slideShow->GetCurrentSlide() && slideShow->GetCurrentSlide()->IsVideo());
         }
         break;
@@ -7334,7 +7330,7 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         break;
       case PLAYER_SEEKBAR:
         {
-          CGUIDialog *seekBar = g_windowManager.GetDialog(WINDOW_DIALOG_SEEK_BAR);
+          CGUIDialog *seekBar = CServiceBroker::GetGUI()->GetWindowManager().GetDialog(WINDOW_DIALOG_SEEK_BAR);
           bReturn = seekBar ? seekBar->IsDialogRunning() : false;
         }
         break;
@@ -7383,8 +7379,8 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
         bReturn = (CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_RENDERMETHOD) == RENDER_OVERLAYS);
         break;
       case VIDEOPLAYER_ISFULLSCREEN:
-        bReturn = g_windowManager.GetActiveWindow() == WINDOW_FULLSCREEN_VIDEO ||
-                  g_windowManager.GetActiveWindow() == WINDOW_FULLSCREEN_GAME;
+        bReturn = CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow() == WINDOW_FULLSCREEN_VIDEO ||
+                  CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow() == WINDOW_FULLSCREEN_GAME;
         break;
       case VIDEOPLAYER_HASMENU:
         bReturn = g_application.GetAppPlayer().HasMenu();
@@ -7414,7 +7410,7 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
       case VISUALISATION_LOCKED:
         {
           CGUIMessage msg(GUI_MSG_GET_VISUALISATION, 0, 0);
-          g_windowManager.SendMessage(msg);
+          CServiceBroker::GetGUI()->GetWindowManager().SendMessage(msg);
           if (msg.GetPointer())
           {
             CGUIVisualisationControl *pVis = static_cast<CGUIVisualisationControl*>(msg.GetPointer());
@@ -7443,7 +7439,7 @@ bool CGUIInfoManager::GetBool(int condition1, int contextWindow, const CGUIListI
       case VISUALISATION_HAS_PRESETS:
         {
           CGUIMessage msg(GUI_MSG_GET_VISUALISATION, 0, 0);
-          g_windowManager.SendMessage(msg);
+          CServiceBroker::GetGUI()->GetWindowManager().SendMessage(msg);
           if (msg.GetPointer())
           {
             CGUIVisualisationControl* viz = static_cast<CGUIVisualisationControl*>(msg.GetPointer());
@@ -7678,7 +7674,7 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
           bReturn = ((int)info.GetData1() == m_nextWindowID);
         else
         {
-          CGUIWindow *window = g_windowManager.GetWindow(m_nextWindowID);
+          CGUIWindow *window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(m_nextWindowID);
           if (window && StringUtils::EqualsNoCase(URIUtils::GetFileName(window->GetProperty("xmlfile").asString()), m_stringParameters[info.GetData2()]))
             bReturn = true;
         }
@@ -7688,7 +7684,7 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
           bReturn = ((int)info.GetData1() == m_prevWindowID);
         else
         {
-          CGUIWindow *window = g_windowManager.GetWindow(m_prevWindowID);
+          CGUIWindow *window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(m_prevWindowID);
           if (window && StringUtils::EqualsNoCase(URIUtils::GetFileName(window->GetProperty("xmlfile").asString()), m_stringParameters[info.GetData2()]))
             bReturn = true;
         }
@@ -7696,15 +7692,15 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
       case WINDOW_IS:
         if (info.GetData1())
         {
-          CGUIWindow *window = g_windowManager.GetWindow(contextWindow);
+          CGUIWindow *window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(contextWindow);
           if (!window)
           {
             // try topmost dialog
-            window = g_windowManager.GetWindow(g_windowManager.GetTopmostModalDialog());
+            window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetTopmostModalDialog());
             if (!window)
             {
               // try active window
-              window = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
+              window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow());
             }
           }
           bReturn = (window && window->GetID() == static_cast<int>(info.GetData1()));
@@ -7714,27 +7710,27 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
         break;
       case WINDOW_IS_VISIBLE:
         if (info.GetData1())
-          bReturn = g_windowManager.IsWindowVisible(info.GetData1());
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsWindowVisible(info.GetData1());
         else
-          bReturn = g_windowManager.IsWindowVisible(m_stringParameters[info.GetData2()]);
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsWindowVisible(m_stringParameters[info.GetData2()]);
         break;
       case WINDOW_IS_ACTIVE:
         if (info.GetData1())
-          bReturn = g_windowManager.IsWindowActive(info.GetData1());
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsWindowActive(info.GetData1());
         else
-          bReturn = g_windowManager.IsWindowActive(m_stringParameters[info.GetData2()]);
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsWindowActive(m_stringParameters[info.GetData2()]);
         break;
       case WINDOW_IS_DIALOG_TOPMOST:
         if (info.GetData1())
-          bReturn = g_windowManager.IsDialogTopmost(info.GetData1());
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsDialogTopmost(info.GetData1());
         else
-          bReturn = g_windowManager.IsDialogTopmost(m_stringParameters[info.GetData2()]);
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsDialogTopmost(m_stringParameters[info.GetData2()]);
         break;
       case WINDOW_IS_MODAL_DIALOG_TOPMOST:
         if (info.GetData1())
-          bReturn = g_windowManager.IsModalDialogTopmost(info.GetData1());
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsModalDialogTopmost(info.GetData1());
         else
-          bReturn = g_windowManager.IsModalDialogTopmost(m_stringParameters[info.GetData2()]);
+          bReturn = CServiceBroker::GetGUI()->GetWindowManager().IsModalDialogTopmost(m_stringParameters[info.GetData2()]);
         break;
       case SYSTEM_HAS_ALARM:
         bReturn = g_alarmClock.HasAlarm(m_stringParameters[info.GetData1()]);
@@ -8025,6 +8021,10 @@ CGUIControl* CGUIInfoManager::GetActiveContainer(int containerId, int contextWin
 /// \brief Examines the multi information sent and returns the string as appropriate
 std::string CGUIInfoManager::GetMultiInfoLabel(const GUIInfo &info, int contextWindow, std::string *fallback)
 {
+  std::string strValue;
+  if (CServiceBroker::GetPVRManager().GetMultiInfoLabel(m_currentFile, info, strValue))
+    return strValue;
+
   if (info.m_info == SKIN_STRING)
   {
     return CSkinSettings::GetInstance().GetString(info.GetData1());
@@ -8086,6 +8086,14 @@ std::string CGUIInfoManager::GetMultiInfoLabel(const GUIInfo &info, int contextW
   else if (info.m_info == PLAYER_SEEKTIME)
   {
     return GetCurrentSeekTime((TIME_FORMAT)info.GetData1());
+  }
+  else if (info.m_info == PVR_EPG_EVENT_SEEK_TIME)
+  {
+    std::string strLabel;
+    CServiceBroker::GetPVRManager().GetSeekTimeLabel(g_application.GetAppPlayer().GetSeekHandler().GetSeekSize(),
+                                                     static_cast<TIME_FORMAT>(info.GetData1()),
+                                                     strLabel);
+    return strLabel;
   }
   else if (info.m_info == PLAYER_SEEKOFFSET)
   {
@@ -8202,7 +8210,7 @@ std::string CGUIInfoManager::GetMultiInfoLabel(const GUIInfo &info, int contextW
     CGUIWindow *window = NULL;
     if (info.GetData1())
     { // window specified
-      window = g_windowManager.GetWindow(info.GetData1());//GetWindowWithCondition(contextWindow, 0);
+      window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(info.GetData1());//GetWindowWithCondition(contextWindow, 0);
     }
     else
     { // no window specified - assume active
@@ -9096,6 +9104,7 @@ void CGUIInfoManager::SetCurrentItem(const CFileItem &item)
   ResetCurrentItem();
 
   CFileItem newItem(item);
+  *m_currentFile = item;
 
   if (newItem.IsAudio())
     SetCurrentSong(newItem);
@@ -9104,8 +9113,12 @@ void CGUIInfoManager::SetCurrentItem(const CFileItem &item)
   else
     SetCurrentMovie(newItem);
 
+  m_currentFile->FillInDefaultIcon();
+
   SetChanged();
   NotifyObservers(ObservableMessageCurrentItem);
+  // todo this should be handled by one of the observers above and forwarded
+  g_application.m_ServiceManager->GetAnnouncementManager().Announce(ANNOUNCEMENT::Info, "xbmc", "OnChanged");
 }
 
 void CGUIInfoManager::SetCurrentAlbumThumb(const std::string &thumbFileName)
@@ -9122,7 +9135,6 @@ void CGUIInfoManager::SetCurrentAlbumThumb(const std::string &thumbFileName)
 void CGUIInfoManager::SetCurrentSong(CFileItem &item)
 {
   CLog::Log(LOGDEBUG,"CGUIInfoManager::SetCurrentSong(%s)",item.GetPath().c_str());
-  *m_currentFile = item;
 
   m_currentFile->LoadMusicTag();
   if (m_currentFile->GetMusicInfoTag()->GetTitle().empty())
@@ -9151,7 +9163,6 @@ void CGUIInfoManager::SetCurrentSong(CFileItem &item)
     CMusicThumbLoader loader;
     loader.LoadItem(m_currentFile);
   }
-  m_currentFile->FillInDefaultIcon();
 
   CMusicInfoLoader::LoadAdditionalTagInfo(m_currentFile);
 }
@@ -9214,7 +9225,6 @@ void CGUIInfoManager::SetCurrentMovie(CFileItem &item)
 void CGUIInfoManager::SetCurrentGame(CFileItem &item)
 {
   CLog::Log(LOGDEBUG,"CGUIInfoManager::SetCurrentGame(%s)", item.GetPath().c_str());
-  *m_currentFile = item;
 
   m_currentFile->LoadGameTag();
   if (m_currentFile->GetGameInfoTag()->GetTitle().empty())
@@ -9222,8 +9232,6 @@ void CGUIInfoManager::SetCurrentGame(CFileItem &item)
     // No title in tag, show filename only
     m_currentFile->GetGameInfoTag()->SetTitle(CUtil::GetTitleFromPath(m_currentFile->GetPath()));
   }
-
-  m_currentFile->FillInDefaultIcon();
 }
 
 std::string CGUIInfoManager::GetSystemHeatInfo(int info)
@@ -9482,6 +9490,36 @@ bool CGUIInfoManager::GetItemInt(int &value, const CGUIListItem *item, int info)
   return false;
 }
 
+std::string CGUIInfoManager::GetItemDuration(const CFileItem *item, TIME_FORMAT format) const
+{
+  int iDuration = -1;
+  if (item->IsPVRChannel() || item->IsEPG() || item->IsPVRTimer())
+  {
+    const CPVREpgInfoTagPtr epgTag = CPVRItem(item).GetEpgInfoTag();
+    if (epgTag)
+      iDuration = epgTag->GetDuration();
+  }
+  else if (item->HasVideoInfoTag())
+  {
+    if (item->GetVideoInfoTag()->GetDuration() > 0)
+      iDuration = item->GetVideoInfoTag()->GetDuration();
+  }
+  else if (item->HasMusicInfoTag())
+  {
+    if (item->GetMusicInfoTag()->GetDuration() > 0)
+      iDuration = item->GetMusicInfoTag()->GetDuration();
+  }
+  else if (item->HasProperty(FILEITEM_PROPERTY_SAVESTATE_DURATION))
+  {
+    iDuration = static_cast<long>(item->GetProperty(FILEITEM_PROPERTY_SAVESTATE_DURATION).asInteger());
+  }
+
+  if (iDuration != -1)
+    return StringUtils::SecondsToTimeString(iDuration, format);
+
+  return std::string();
+}
+
 std::string CGUIInfoManager::GetItemLabel(const CFileItem *item, int info, std::string *fallback)
 {
   if (!item) return "";
@@ -9519,6 +9557,12 @@ std::string CGUIInfoManager::GetItemLabel(const CFileItem *item, int info, std::
       return StringUtils::FormatNumber(rating.rating);
     else
       return FormatRatingAndVotes(rating.rating, rating.votes);
+  }
+
+  if (info >= LISTITEM_PROPERTY_START + LISTITEM_DURATION_OFFSET &&
+      info - (LISTITEM_PROPERTY_START + LISTITEM_DURATION_OFFSET) < static_cast<int>(m_listitemProperties.size()))
+  {
+    return GetItemDuration(item, TranslateTimeFormat(m_listitemProperties[info - (LISTITEM_PROPERTY_START + LISTITEM_DURATION_OFFSET)]));
   }
 
   if (info >= LISTITEM_PROPERTY_START && info - LISTITEM_PROPERTY_START < (int)m_listitemProperties.size())
@@ -9789,31 +9833,7 @@ std::string CGUIInfoManager::GetItemLabel(const CFileItem *item, int info, std::
     }
   case LISTITEM_DURATION:
     {
-      std::string duration;
-      if (item->IsPVRChannel() || item->IsEPG() || item->IsPVRTimer())
-      {
-        const CPVREpgInfoTagPtr epgTag = CPVRItem(item).GetEpgInfoTag();
-        if (epgTag)
-          return StringUtils::SecondsToTimeString(epgTag->GetDuration());
-        else
-          return std::string();
-      }
-      else if (item->HasVideoInfoTag())
-      {
-        if (item->GetVideoInfoTag()->GetDuration() > 0)
-          duration = StringUtils::SecondsToTimeString(item->GetVideoInfoTag()->GetDuration());
-      }
-      else if (item->HasMusicInfoTag())
-      {
-        if (item->GetMusicInfoTag()->GetDuration() > 0)
-          duration = StringUtils::SecondsToTimeString(item->GetMusicInfoTag()->GetDuration());
-      }
-      else if (item->HasProperty(FILEITEM_PROPERTY_SAVESTATE_DURATION))
-      {
-        long iDuration = static_cast<long>(item->GetProperty(FILEITEM_PROPERTY_SAVESTATE_DURATION).asInteger());
-        duration = StringUtils::SecondsToTimeString(iDuration);
-      }
-      return duration;
+      return GetItemDuration(item, TIME_FORMAT_GUESS);
     }
   case LISTITEM_PLOT:
     if (item->IsPVRChannel() || item->IsEPG() || item->IsPVRTimer())
@@ -10586,7 +10606,7 @@ std::string CGUIInfoManager::GetPictureLabel(int info)
     return GetItemLabel(m_currentSlide, LISTITEM_DATE);
   else if (info == SLIDE_INDEX)
   {
-    CGUIWindowSlideShow *slideshow = g_windowManager.GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
+    CGUIWindowSlideShow *slideshow = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIWindowSlideShow>(WINDOW_SLIDESHOW);
     if (slideshow && slideshow->NumSlides())
     {
       return StringUtils::Format("%d/%d", slideshow->CurrentSlide(), slideshow->NumSlides());
@@ -10625,17 +10645,17 @@ bool CGUIInfoManager::CheckWindowCondition(CGUIWindow *window, int condition) co
 
 CGUIWindow *CGUIInfoManager::GetWindowWithCondition(int contextWindow, int condition) const
 {
-  CGUIWindow *window = g_windowManager.GetWindow(contextWindow);
+  CGUIWindow *window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(contextWindow);
   if (CheckWindowCondition(window, condition))
     return window;
 
   // try topmost dialog
-  window = g_windowManager.GetWindow(g_windowManager.GetTopmostModalDialog());
+  window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetTopmostModalDialog());
   if (CheckWindowCondition(window, condition))
     return window;
 
   // try active window
-  window = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
+  window = CServiceBroker::GetGUI()->GetWindowManager().GetWindow(CServiceBroker::GetGUI()->GetWindowManager().GetActiveWindow());
   if (CheckWindowCondition(window, condition))
     return window;
 
@@ -10959,6 +10979,8 @@ void CGUIInfoManager::OnApplicationMessage(KODI::MESSAGING::ThreadMessage* pMsg)
       SetCurrentVideoTag(*item->GetVideoInfoTag());
     else
       SetCurrentItem(*item);
+
+    delete item;
   }
   break;
 
