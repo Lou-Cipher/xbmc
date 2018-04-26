@@ -30,7 +30,7 @@
 #include "utils/log.h"
 #include "utils/SysfsUtils.h"
 #include "utils/StringUtils.h"
-#include "guilib/gui3d.h"
+#include "windowing/GraphicContext.h"
 #include "utils/RegExp.h"
 #include "filesystem/SpecialProtocol.h"
 #include "rendering/RenderSystem.h"
@@ -69,7 +69,7 @@ bool aml_wired_present()
 }
 
 bool aml_permissions()
-{  
+{
   if (!aml_present())
     return false;
 
@@ -118,6 +118,11 @@ bool aml_permissions()
       CLog::Log(LOGERROR, "AML: no rw on /sys/module/amlvideodri/parameters/freerun_mode");
       permissions_ok = 0;
     }
+    if (!SysfsUtils::HasRW("/sys/class/video/freerun_mode"))
+    {
+      CLog::Log(LOGERROR, "AML: no rw on /sys/class/video/freerun_mode");
+      permissions_ok = 0;
+    }
     if (!SysfsUtils::HasRW("/sys/class/audiodsp/digital_raw"))
     {
       CLog::Log(LOGERROR, "AML: no rw on /sys/class/audiodsp/digital_raw");
@@ -149,6 +154,14 @@ bool aml_permissions()
     if (aml_has_frac_rate_policy() && !SysfsUtils::HasRW("/sys/class/amhdmitx/amhdmitx0/frac_rate_policy"))
     {
       CLog::Log(LOGERROR, "AML: no rw on /sys/class/amhdmitx/amhdmitx0/frac_rate_policy");
+    }
+    if (!SysfsUtils::HasRW("/sys/module/di/parameters/bypass_prog"))
+    {
+      CLog::Log(LOGERROR, "AML: no rw on /sys/module/di/parameters/bypass_prog");
+    }
+    if (!SysfsUtils::HasRW("/sys/class/display/mode"))
+    {
+      CLog::Log(LOGERROR, "AML: no rw on /sys/class/display/mode");
     }
   }
 
@@ -598,7 +611,7 @@ void aml_handle_scale(const RESOLUTION_INFO &res)
 void aml_handle_display_stereo_mode(const int stereo_mode)
 {
   static std::string lastHdmiTxConfig = "3doff";
-  
+
   std::string command = "3doff";
   switch (stereo_mode)
   {
@@ -612,7 +625,7 @@ void aml_handle_display_stereo_mode(const int stereo_mode)
       // nothing - command is already initialised to "3doff"
       break;
   }
-  
+
   CLog::Log(LOGDEBUG, "AMLUtils::aml_handle_display_stereo_mode old mode %s new mode %s", lastHdmiTxConfig.c_str(), command.c_str());
   // there is no way to read back current mode from sysfs
   // so we track state internal. Because even

@@ -364,9 +364,6 @@ const std::string CSettings::SETTING_AUDIOOUTPUT_PROCESSQUALITY = "audiooutput.p
 const std::string CSettings::SETTING_AUDIOOUTPUT_ATEMPOTHRESHOLD = "audiooutput.atempothreshold";
 const std::string CSettings::SETTING_AUDIOOUTPUT_STREAMSILENCE = "audiooutput.streamsilence";
 const std::string CSettings::SETTING_AUDIOOUTPUT_STREAMNOISE = "audiooutput.streamnoise";
-const std::string CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED = "audiooutput.dspaddonsenabled";
-const std::string CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS = "audiooutput.dspsettings";
-const std::string CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB = "audiooutput.dspresetdb";
 const std::string CSettings::SETTING_AUDIOOUTPUT_GUISOUNDMODE = "audiooutput.guisoundmode";
 const std::string CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGH = "audiooutput.passthrough";
 const std::string CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGHDEVICE = "audiooutput.passthroughdevice";
@@ -807,12 +804,10 @@ void CSettings::UninitializeISettingsHandlers()
   GetSettingsManager()->UnregisterCallback(&CMediaSettings::GetInstance());
   GetSettingsManager()->UnregisterCallback(&CDisplaySettings::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_application.GetAppPlayer().GetSeekHandler());
-  GetSettingsManager()->UnregisterCallback(&CStereoscopicsManager::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_application);
   GetSettingsManager()->UnregisterCallback(&g_audioManager);
   GetSettingsManager()->UnregisterCallback(&g_charsetConverter);
   GetSettingsManager()->UnregisterCallback(&g_langInfo);
-  GetSettingsManager()->UnregisterCallback(&CNetworkServices::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_passwordManager);
   GetSettingsManager()->UnregisterCallback(&CRssManager::GetInstance());
 #if defined(TARGET_LINUX)
@@ -885,10 +880,6 @@ void CSettings::InitializeISettingCallbacks()
   GetSettingsManager()->RegisterCallback(&g_application.GetAppPlayer().GetSeekHandler(), settingSet);
 
   settingSet.clear();
-  settingSet.insert(CSettings::SETTING_VIDEOSCREEN_STEREOSCOPICMODE);
-  GetSettingsManager()->RegisterCallback(&CStereoscopicsManager::GetInstance(), settingSet);
-
-  settingSet.clear();
   settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGH);
   settingSet.insert(CSettings::SETTING_LOOKANDFEEL_SKIN);
   settingSet.insert(CSettings::SETTING_LOOKANDFEEL_SKINSETTINGS);
@@ -940,34 +931,6 @@ void CSettings::InitializeISettingCallbacks()
   GetSettingsManager()->RegisterCallback(&g_langInfo, settingSet);
 
   settingSet.clear();
-  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVER);
-  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERPORT);
-  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERUSERNAME);
-  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERPASSWORD);
-  settingSet.insert(CSettings::SETTING_SERVICES_WEBSERVERSSL);
-  settingSet.insert(CSettings::SETTING_SERVICES_ZEROCONF);
-  settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAY);
-  settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAYVOLUMECONTROL);
-  settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAYVIDEOSUPPORT);
-  settingSet.insert(CSettings::SETTING_SERVICES_USEAIRPLAYPASSWORD);
-  settingSet.insert(CSettings::SETTING_SERVICES_AIRPLAYPASSWORD);
-  settingSet.insert(CSettings::SETTING_SERVICES_UPNP);
-  settingSet.insert(CSettings::SETTING_SERVICES_UPNPSERVER);
-  settingSet.insert(CSettings::SETTING_SERVICES_UPNPRENDERER);
-  settingSet.insert(CSettings::SETTING_SERVICES_UPNPCONTROLLER);
-  settingSet.insert(CSettings::SETTING_SERVICES_ESENABLED);
-  settingSet.insert(CSettings::SETTING_SERVICES_ESPORT);
-  settingSet.insert(CSettings::SETTING_SERVICES_ESALLINTERFACES);
-  settingSet.insert(CSettings::SETTING_SERVICES_ESINITIALDELAY);
-  settingSet.insert(CSettings::SETTING_SERVICES_ESCONTINUOUSDELAY);
-  settingSet.insert(CSettings::SETTING_SMB_WINSSERVER);
-  settingSet.insert(CSettings::SETTING_SMB_WORKGROUP);
-  settingSet.insert(CSettings::SETTING_SMB_MINPROTOCOL);
-  settingSet.insert(CSettings::SETTING_SMB_MAXPROTOCOL);
-  settingSet.insert(CSettings::SETTING_SMB_LEGACYSECURITY);
-  GetSettingsManager()->RegisterCallback(&CNetworkServices::GetInstance(), settingSet);
-
-  settingSet.clear();
   settingSet.insert(CSettings::SETTING_MASTERLOCK_LOCKCODE);
   GetSettingsManager()->RegisterCallback(&g_passwordManager, settingSet);
 
@@ -1012,12 +975,10 @@ void CSettings::UninitializeISettingCallbacks()
   GetSettingsManager()->UnregisterCallback(&CMediaSettings::GetInstance());
   GetSettingsManager()->UnregisterCallback(&CDisplaySettings::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_application.GetAppPlayer().GetSeekHandler());
-  GetSettingsManager()->UnregisterCallback(&CStereoscopicsManager::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_application);
   GetSettingsManager()->UnregisterCallback(&g_audioManager);
   GetSettingsManager()->UnregisterCallback(&g_charsetConverter);
   GetSettingsManager()->UnregisterCallback(&g_langInfo);
-  GetSettingsManager()->UnregisterCallback(&CNetworkServices::GetInstance());
   GetSettingsManager()->UnregisterCallback(&g_passwordManager);
   GetSettingsManager()->UnregisterCallback(&CRssManager::GetInstance());
 #if defined(TARGET_LINUX)

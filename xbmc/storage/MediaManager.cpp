@@ -78,7 +78,7 @@ class CMediaManager g_mediaManager;
 CMediaManager::CMediaManager()
 {
   m_bhasoptical = false;
-  m_platformStorage = NULL;
+  m_platformStorage = nullptr;
 }
 
 void CMediaManager::Stop()
@@ -87,7 +87,7 @@ void CMediaManager::Stop()
     m_platformStorage->Stop();
 
   delete m_platformStorage;
-  m_platformStorage = NULL;
+  m_platformStorage = nullptr;
 }
 
 void CMediaManager::Initialize()
@@ -171,7 +171,8 @@ void CMediaManager::GetLocalDrives(VECSOURCES &localDrives, bool includeQ)
 void CMediaManager::GetRemovableDrives(VECSOURCES &removableDrives)
 {
   CSingleLock lock(m_CritSecStorageProvider);
-  m_platformStorage->GetRemovableDrives(removableDrives);
+  if (m_platformStorage)
+    m_platformStorage->GetRemovableDrives(removableDrives);
 }
 
 void CMediaManager::GetNetworkLocations(VECSOURCES &locations, bool autolocations)
@@ -292,7 +293,9 @@ void CMediaManager::AddAutoSource(const CMediaSource &share, bool bAutorun)
   CMediaSourceSettings::GetInstance().AddShare("music", share);
   CMediaSourceSettings::GetInstance().AddShare("programs", share);
   CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE_SOURCES);
-  CServiceBroker::GetGUI()->GetWindowManager().SendThreadMessage( msg );
+  CGUIComponent *gui = CServiceBroker::GetGUI();
+  if (gui)
+    gui->GetWindowManager().SendThreadMessage( msg );
 
 #ifdef HAS_DVD_DRIVE
   if(bAutorun)

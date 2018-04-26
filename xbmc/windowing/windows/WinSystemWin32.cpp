@@ -19,17 +19,20 @@
  */
 
 #include "WinSystemWin32.h"
-#include "WinEventsWin32.h"
-#include "resource.h"
 #include "Application.h"
 #include "cores/AudioEngine/AESinkFactory.h"
 #include "cores/AudioEngine/Sinks/AESinkDirectSound.h"
 #include "cores/AudioEngine/Sinks/AESinkWASAPI.h"
-#include "ServiceBroker.h"
+#include "filesystem/File.h"
+#include "filesystem/SpecialProtocol.h"
 #include "guilib/gui3d.h"
 #include "messaging/ApplicationMessenger.h"
+#include "platform/Environment.h"
 #include "platform/win32/CharsetConverter.h"
-#include "powermanagement/windows/Win32PowerSyscall.h"
+#include "platform/win32/input/IRServerSuite.h"
+#include "platform/win32/powermanagement/Win32PowerSyscall.h"
+#include "resource.h"
+#include "ServiceBroker.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/DisplaySettings.h"
 #include "settings/Settings.h"
@@ -38,10 +41,10 @@
 #include "utils/CharsetConverter.h"
 #include "utils/SystemInfo.h"
 #include "VideoSyncD3D.h"
-#include "platform/win32/input/IRServerSuite.h"
+#include "windowing/GraphicContext.h"
+#include "WinEventsWin32.h"
 
 #include <tpcshrd.h>
-#include "guilib/GraphicContext.h"
 
 CWinSystemWin32::CWinSystemWin32()
   : CWinSystemBase()
@@ -64,12 +67,21 @@ CWinSystemWin32::CWinSystemWin32()
   , m_inFocus(false)
   , m_bMinimized(false)
 {
+  std::string cacert = CEnvironment::getenv("SSL_CERT_FILE");
+  if (cacert.empty() || !XFILE::CFile::Exists(cacert))
+  {
+    cacert = CSpecialProtocol::TranslatePath("special://xbmc/system/certs/cacert.pem");
+    if (XFILE::CFile::Exists(cacert))
+      CEnvironment::setenv("SSL_CERT_FILE", cacert.c_str(), 1);
+  }
+
   m_winEvents.reset(new CWinEventsWin32());
   AE::CAESinkFactory::ClearSinks();
   CAESinkDirectSound::Register();
   CAESinkWASAPI::Register();
   CWin32PowerSyscall::Register();
-  CRemoteControl::Register();
+  m_irss.reset(new CIRServerSuite());
+  m_irss->Initialize();
 }
 
 CWinSystemWin32::~CWinSystemWin32()
@@ -441,7 +453,7 @@ bool CWinSystemWin32::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, bool 
 
   bool forceChange = false;    // resolution/display is changed but window state isn't changed
   bool changeScreen = false;   // display is changed
-  bool stereoChange = IsStereoEnabled() != (g_graphicsContext.GetStereoMode() == RENDER_STEREO_MODE_HARDWAREBASED);
+  bool stereoChange = IsStereoEnabled() != (CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode() == RENDER_STEREO_MODE_HARDWAREBASED);
 
   if ( m_nWidth != res.iWidth
     || m_nHeight != res.iHeight
@@ -1119,7 +1131,7 @@ void CWinSystemWin32::NotifyAppFocusChange(bool bGaining)
       SetWindowPos(m_hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
 
     RESOLUTION_INFO res = { 0 };
-    const RESOLUTION resolution = g_graphicsContext.GetVideoResolution();
+    const RESOLUTION resolution = CServiceBroker::GetWinSystem()->GetGfxContext().GetVideoResolution();
     if (bGaining && resolution > RES_INVALID)
       res = CDisplaySettings::GetInstance().GetResolutionInfo(resolution);
 

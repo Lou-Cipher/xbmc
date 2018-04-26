@@ -1171,12 +1171,6 @@
 			<onclick>SetRating</onclick>
 		</control>
 		<control type="button">
-			<label>15047</label>
-			<include>MenuButtonCommonValues</include>
-			<onclick>ActivateWindow(OSDAudioDSPSettings)</onclick>
-			<visible>system.getbool(audiooutput.dspaddonsenabled)</visible>
-		</control>
-		<control type="button">
 			<label>29900</label>
 			<include>MenuButtonCommonValues</include>
 			<onclick>ActivateWindow(PVRRadioRDSInfo)</onclick>
@@ -2496,12 +2490,6 @@
 			<include>MenuButtonCommonValues</include>
 			<onclick>PlayerControl(ShowVideoMenu)</onclick>
 			<visible>VideoPlayer.HasMenu + !VideoPlayer.Content(LiveTV)</visible>
-		</control>
-		<control type="button">
-			<label>15047</label>
-			<include>MenuButtonCommonValues</include>
-			<onclick>ActivateWindow(OSDAudioDSPSettings)</onclick>
-			<visible>system.getbool(audiooutput.dspaddonsenabled)</visible>
 		</control>
 		<control type="button">
 			<label>Player info</label>

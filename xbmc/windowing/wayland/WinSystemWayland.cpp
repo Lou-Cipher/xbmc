@@ -20,7 +20,6 @@
 
 #include "WinSystemWayland.h"
 
-#include "OptionalsReg.h"
 #include <algorithm>
 #include <limits>
 #include <numeric>
@@ -34,10 +33,12 @@
 #include "input/InputManager.h"
 #include "input/touch/generic/GenericTouchActionHandler.h"
 #include "input/touch/generic/GenericTouchInputHandler.h"
-#include "powermanagement/linux/LinuxPowerSyscall.h"
+#include "platform/linux/powermanagement/LinuxPowerSyscall.h"
+#include "platform/linux/OptionalsReg.h"
 #include "platform/linux/PlatformConstants.h"
 #include "platform/linux/TimeUtils.h"
 #include "messaging/ApplicationMessenger.h"
+#include "OptionalsReg.h"
 #include "OSScreenSaverIdleInhibitUnstableV1.h"
 #include "Registry.h"
 #include "ServiceBroker.h"
@@ -152,28 +153,29 @@ CWinSystemWayland::CWinSystemWayland()
     envSink = getenv("AE_SINK");
   if (StringUtils::EqualsNoCase(envSink, "ALSA"))
   {
-    ::WAYLAND::ALSARegister();
+    OPTIONALS::ALSARegister();
   }
   else if (StringUtils::EqualsNoCase(envSink, "PULSE"))
   {
-    ::WAYLAND::PulseAudioRegister();
+    OPTIONALS::PulseAudioRegister();
   }
   else if (StringUtils::EqualsNoCase(envSink, "SNDIO"))
   {
-    ::WAYLAND::SndioRegister();
+    OPTIONALS::SndioRegister();
   }
   else
   {
-    if (!::WAYLAND::PulseAudioRegister())
+    if (!OPTIONALS::PulseAudioRegister())
     {
-      if (!::WAYLAND::ALSARegister())
+      if (!OPTIONALS::ALSARegister())
       {
-        ::WAYLAND::SndioRegister();
+        OPTIONALS::SndioRegister();
       }
     }
   }
   m_winEvents.reset(new CWinEventsWayland());
   CLinuxPowerSyscall::Register();
+  m_lirc.reset(OPTIONALS::LircRegister());
 }
 
 CWinSystemWayland::~CWinSystemWayland() noexcept
@@ -1331,7 +1333,7 @@ void CWinSystemWayland::PrepareFramePresentation()
     };
     feedback.on_presented() = [this,iter](std::uint32_t tvSecHi, std::uint32_t tvSecLo, std::uint32_t tvNsec, std::uint32_t refresh, std::uint32_t seqHi, std::uint32_t seqLo, wayland::presentation_feedback_kind flags)
     {
-      timespec tv = { .tv_sec = static_cast<std::time_t> ((static_cast<std::uint64_t>(tvSecHi) << 32) + tvSecLo), .tv_nsec = tvNsec };
+      timespec tv = { .tv_sec = static_cast<std::time_t> ((static_cast<std::uint64_t>(tvSecHi) << 32) + tvSecLo), .tv_nsec = static_cast<long>(tvNsec) };
       std::int64_t latency{KODI::LINUX::TimespecDifference(iter->submissionTime, tv)};
       std::uint64_t msc{(static_cast<std::uint64_t>(seqHi) << 32) + seqLo};
       m_presentationFeedbackHandlers.Invoke(tv, refresh, m_syncOutputID, m_syncOutputRefreshRate, msc);

@@ -64,12 +64,12 @@ CRetroPlayer::CRetroPlayer(IPlayerCallback& callback) :
   IPlayer(callback),
   m_gameServices(CServiceBroker::GetGameServices())
 {
-  CServiceBroker::GetWinSystem().RegisterRenderLoop(this);
+  CServiceBroker::GetWinSystem()->RegisterRenderLoop(this);
 }
 
 CRetroPlayer::~CRetroPlayer()
 {
-  CServiceBroker::GetWinSystem().UnregisterRenderLoop(this);
+  CServiceBroker::GetWinSystem()->UnregisterRenderLoop(this);
   CloseFile();
 }
 

@@ -38,7 +38,7 @@
 #include "filesystem/MusicDatabaseDirectory/DirectoryNode.h"
 #include "filesystem/MusicDatabaseDirectory/QueryParams.h"
 #include "guilib/GUIComponent.h"
-#include "guiinfo/GUIInfoLabels.h"
+#include "guilib/guiinfo/GUIInfoLabels.h"
 #include "GUIInfoManager.h"
 #include "guilib/GUIWindowManager.h"
 #include "guilib/LocalizeStrings.h"
@@ -1422,6 +1422,75 @@ bool CMusicDatabase::DeleteArtistDiscography(int idArtist)
 {
   std::string strSQL = PrepareSQL("DELETE FROM discography WHERE idArtist = %i", idArtist);
   return ExecuteQuery(strSQL);
+}
+
+bool CMusicDatabase::GetArtistDiscography(int idArtist, CFileItemList& items)
+{
+  try
+  {
+    if (NULL == m_pDB.get()) return false;
+    if (NULL == m_pDS.get()) return false;
+
+    // Combine entries from discography and album tables
+    // When title in both, album entry will be before disco entry
+    std::string strSQL;
+    strSQL = PrepareSQL("SELECT strAlbum, "
+      "CAST(discography.strYear as INT) AS iYear, -1 AS idAlbum "
+      "FROM discography "
+      "WHERE discography.idArtist = %i "
+      "UNION "
+      "SELECT strAlbum, iYear, album.idAlbum "
+      "FROM album JOIN album_artist ON album_artist.idAlbum = album.idAlbum "
+      "WHERE album_artist.idArtist = %i "
+      "ORDER BY iYear, strAlbum, idAlbum DESC",       
+      idArtist, idArtist);
+
+    if (!m_pDS->query(strSQL))
+      return false;
+    int iRowsFound = m_pDS->num_rows();
+    if (iRowsFound == 0)
+    {
+      m_pDS->close();
+      return true;
+    }
+
+    std::string strAlbum;
+    std::string strLastAlbum;
+    int iLastID = -1;
+    while (!m_pDS->eof())
+    {
+      int idAlbum = m_pDS->fv("idAlbum").get_asInt();
+      strAlbum = m_pDS->fv("strAlbum").get_asString();
+      if (!strAlbum.empty())
+      {
+        if (strAlbum.compare(strLastAlbum) != 0)
+        { // Save new title (from album or discography)
+          CFileItemPtr pItem(new CFileItem(strAlbum));
+          pItem->SetLabel2(m_pDS->fv("iYear").get_asString());
+          pItem->GetMusicInfoTag()->SetDatabaseId(idAlbum, "album");
+
+          items.Add(pItem);
+          strLastAlbum = strAlbum;
+          iLastID = idAlbum;
+        }
+        else if (idAlbum > 0 && iLastID < 0)
+        { // Amend previously saved discography item to set album ID
+          items[items.Size() - 1]->GetMusicInfoTag()->SetDatabaseId(idAlbum, "album");
+        }
+      }
+      m_pDS->next();
+    }
+
+    // cleanup
+    m_pDS->close();
+
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
+  }
+  return false;
 }
 
 int CMusicDatabase::AddRole(const std::string &strRole)
@@ -5392,15 +5461,31 @@ int CMusicDatabase::GetSongsCount(const Filter &filter)
   return 0;
 }
 
-bool CMusicDatabase::GetAlbumPath(int idAlbum, std::string &basePath)
+bool CMusicDatabase::GetAlbumPath(int idAlbum, std::string& basePath)
 {
+  basePath.clear();
+  std::vector<std::pair<std::string, int>> paths;
+  if (!GetAlbumPaths(idAlbum, paths))
+    return false;
+
+  for (const auto& pathpair : paths)
+  {
+    if (basePath.empty())
+      basePath = pathpair.first.c_str();
+    else
+      URIUtils::GetCommonPath(basePath, pathpair.first.c_str());
+  }
+  return true;
+}
+
+bool CMusicDatabase::GetAlbumPaths(int idAlbum, std::vector<std::pair<std::string, int>>& paths)
+{
+  paths.clear();
   std::string strSQL;
   try
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS2.get()) return false;
-
-    basePath.clear();
 
     // Get the unique paths of songs on the album, providing there are no songs from 
     // other albums with the same path. This returns 
@@ -5409,65 +5494,64 @@ bool CMusicDatabase::GetAlbumPath(int idAlbum, std::string &basePath)
     // but does *not* return any path when albums are mixed together. That could be because of 
     // deliberate file organisation, or (more likely) because of a tagging error in album name
     // or Musicbrainzalbumid. Thus it avoids finding somme generic music path.
-    strSQL = PrepareSQL("SELECT DISTINCT strPath FROM song "
+    strSQL = PrepareSQL("SELECT DISTINCT strPath, song.idPath FROM song "
       "JOIN path ON song.idPath = path.idPath "
       "WHERE song.idAlbum = %ld "
       "AND (SELECT COUNT(DISTINCT(idAlbum)) FROM song AS song2 "
       "WHERE idPath = song.idPath) = 1", idAlbum);
 
-    if (!m_pDS2->query(strSQL)) return false;
-    int iRowsFound = m_pDS2->num_rows();
-    
-    if (iRowsFound == 0)
+    if (!m_pDS2->query(strSQL))
+      return false;
+    if (m_pDS2->num_rows() == 0)
     {
       // Album does not have a unique path, files are mixed
       m_pDS2->close();
       return false;
     }
-    else if (iRowsFound == 1)
-    {
-      // Path contains all the songs and no others
-      basePath = m_pDS2->fv("strPath").get_asString();
-    }
-    else
-    {
-      // e.g. <album>/cd1, <album>/cd2 etc. for disc sets
-      // Find the common path
-      while (!m_pDS2->eof())
-      {
-        std::string path = m_pDS2->fv("strPath").get_asString();
-        if (basePath.empty())
-          basePath = path;
-        else
-          URIUtils::GetCommonPath(basePath, path);
 
-        m_pDS2->next();
-      }
+    while (!m_pDS2->eof())
+    {
+      paths.emplace_back(m_pDS2->fv("strPath").get_asString(), m_pDS2->fv("song.idPath").get_asInt());
+      m_pDS2->next();
     }
     // Cleanup recordset data
-    m_pDS2->close(); 
+    m_pDS2->close();
     return true;
   }
   catch (...)
   {
-   CLog::Log(LOGERROR, "CMusicDatabase::%s - failed to execute %s", __FUNCTION__, strSQL.c_str());
+    CLog::Log(LOGERROR, "CMusicDatabase::%s - failed to execute %s", __FUNCTION__, strSQL.c_str());
   }
 
   return false;
 }
 
-bool CMusicDatabase::SaveAlbumThumb(int idAlbum, const std::string& strThumb)
+int CMusicDatabase::GetDiscnumberForPathID(int idPath)
 {
-  SetArtForItem(idAlbum, MediaTypeAlbum, "thumb", strThumb);
-  //! @todo We should prompt the user to update the art for songs
-  std::string sql = PrepareSQL("UPDATE art"
-                              " SET url='-'"
-                              " WHERE media_type='song'"
-                              " AND type='thumb'"
-                              " AND media_id IN"
-                              " (SELECT idSong FROM song WHERE idAlbum=%ld)", idAlbum);
-  ExecuteQuery(sql);
-  return true;
+  std::string strSQL;
+  int result = -1;
+  try
+  {
+    if (NULL == m_pDB.get()) return -1;
+    if (NULL == m_pDS2.get()) return -1;
+
+    strSQL = PrepareSQL("SELECT DISTINCT(song.iTrack >> 16) AS discnum FROM song "
+      "WHERE idPath = %i", idPath);
+
+    if (!m_pDS2->query(strSQL))
+      return -1;
+    if (m_pDS2->num_rows() == 1)
+    { // Songs with this path have a unique disc number
+      result = m_pDS2->fv("discnum").get_asInt();
+    }
+    // Cleanup recordset data
+    m_pDS2->close();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "CMusicDatabase::%s - failed to execute %s", __FUNCTION__, strSQL.c_str());
+  }
+  return result;
 }
 
 // Get old "artist path" - where artist.nfo and art was located v17 and below.
@@ -5755,6 +5839,25 @@ bool CMusicDatabase::GetArtistFromSong(int idSong, CArtist &artist)
     CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
   }
   return false;
+}
+
+bool CMusicDatabase::IsSongArtist(int idSong, int idArtist)
+{
+  std::string strSQL = PrepareSQL(
+    "SELECT 1 FROM song_artist "
+    "WHERE song_artist.idSong= %i AND "
+    "song_artist.idArtist = %i AND song_artist.idRole = 1",
+    idSong, idArtist);
+  return GetSingleValue(strSQL).empty(); 
+}
+
+bool CMusicDatabase::IsSongAlbumArtist(int idSong, int idArtist)
+{
+  std::string strSQL = PrepareSQL(
+    "SELECT 1 FROM song JOIN album_artist ON song.idAlbum = album_artist.idAlbum "   
+    "WHERE song.idSong = %i AND album_artist.idArtist = %i",
+    idSong, idArtist);
+  return GetSingleValue(strSQL).empty();
 }
 
 int CMusicDatabase::GetAlbumByName(const std::string& strAlbum, const std::string& strArtist)
@@ -6333,8 +6436,12 @@ bool CMusicDatabase::CommitTransaction()
 {
   if (CDatabase::CommitTransaction())
   { // number of items in the db has likely changed, so reset the infomanager cache
-    g_infoManager.SetLibraryBool(LIBRARY_HAS_MUSIC, GetSongsCount() > 0);
-    return true;
+    CGUIComponent* gui = CServiceBroker::GetGUI();
+    if (gui)
+    {
+      gui->GetInfoManager().GetInfoProviders().GetLibraryInfoProvider().SetLibraryBool(LIBRARY_HAS_MUSIC, GetSongsCount() > 0);
+      return true;
+    }
   }
   return false;
 }
@@ -7017,7 +7124,9 @@ void CMusicDatabase::ImportFromXML(const std::string &xmlFile)
     }
     CommitTransaction();
 
-    g_infoManager.ResetLibraryBools();
+    CGUIComponent* gui = CServiceBroker::GetGUI();
+    if (gui)
+      gui->GetInfoManager().GetInfoProviders().GetLibraryInfoProvider().ResetLibraryBools();
   }
   catch (...)
   {

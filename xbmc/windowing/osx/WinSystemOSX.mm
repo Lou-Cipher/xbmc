@@ -22,7 +22,7 @@
 #include "WinEventsOSX.h"
 #include "VideoSyncOsx.h"
 #include "OSScreenSaverOSX.h"
-#include "Application.h"
+#include "AppInboundProtocol.h"
 #include "ServiceBroker.h"
 #include "messaging/ApplicationMessenger.h"
 #include "CompileInfo.h"
@@ -38,7 +38,7 @@
 #include "cores/VideoPlayer/VideoRenderers/HwDecRender/RendererVTBGL.h"
 #include "guilib/DispResource.h"
 #include "guilib/GUIWindowManager.h"
-#include "powermanagement/osx/CocoaPowerSyscall.h"
+#include "platform/darwin/osx/powermanagement/CocoaPowerSyscall.h"
 #include "settings/DisplaySettings.h"
 #include "settings/Settings.h"
 #include "settings/DisplaySettings.h"
@@ -104,7 +104,9 @@ using namespace WINDOWING;
       newEvent.type = XBMC_VIDEOMOVE;
       newEvent.move.x = window_origin.x;
       newEvent.move.y = window_origin.y;
-      g_application.OnEvent(newEvent);
+      std::shared_ptr<CAppInboundProtocol> appPort = CServiceBroker::GetAppPort();
+      if (appPort)
+        appPort->OnEvent(newEvent);
     }
   }
 }
@@ -130,26 +132,7 @@ using namespace WINDOWING;
   CWinSystemOSX *winsys = (CWinSystemOSX*)m_userdata;
 	if (!winsys)
     return;
-  /* placeholder, do not uncomment or you will SDL recurse into death
-  NSOpenGLContext* context = [NSOpenGLContext currentContext];
-  if (context)
-  {
-    if ([context view])
-    {
-      NSSize view_size = [[context view] frame].size;
-      XBMC_Event newEvent;
-      memset(&newEvent, 0, sizeof(newEvent));
-      newEvent.type = XBMC_VIDEORESIZE;
-      newEvent.resize.w = view_size.width;
-      newEvent.resize.h = view_size.height;
-      if (newEvent.resize.w * newEvent.resize.h)
-      {
-        g_application.OnEvent(newEvent);
-        CServiceBroker::GetGUI()->GetWindowManager().MarkDirty();
-      }
-    }
-  }
-  */
+
 }
 @end
 
@@ -555,7 +538,7 @@ static void DisplayReconfigured(CGDirectDisplayID display,
   if (flags & kCGDisplayBeginConfigurationFlag)
   {
     // pre/post-reconfiguration changes
-    RESOLUTION res = g_graphicsContext.GetVideoResolution();
+    RESOLUTION res = CServiceBroker::GetWinSystem()->GetGfxContext().GetVideoResolution();
     if (res == RES_INVALID)
       return;
 
@@ -864,7 +847,7 @@ bool CWinSystemOSX::ResizeWindow(int newWidth, int newHeight, int newLeft, int n
   m_nWidth = newWidth;
   m_nHeight = newHeight;
   m_glContext = context;
-  g_graphicsContext.SetFPS(m_refreshRate);
+  CServiceBroker::GetWinSystem()->GetGfxContext().SetFPS(m_refreshRate);
 
   return true;
 }
@@ -1458,7 +1441,7 @@ void CWinSystemOSX::FillInVideoModes()
           res.strOutput = [dispName UTF8String];
         }
 
-        g_graphicsContext.ResetOverscan(res);
+        CServiceBroker::GetWinSystem()->GetGfxContext().ResetOverscan(res);
         CDisplaySettings::GetInstance().AddResolutionInfo(res);
       }
     }
@@ -1862,7 +1845,7 @@ void CWinSystemOSX::AnnounceOnResetDevice()
   // doing the callbacks
   GetScreenResolution(&w, &h, &currentFps, currentScreenIdx);
 
-  g_graphicsContext.SetFPS(currentFps);
+  CServiceBroker::GetWinSystem()->GetGfxContext().SetFPS(currentFps);
 
   CSingleLock lock(m_resourceSection);
   // tell any shared resources

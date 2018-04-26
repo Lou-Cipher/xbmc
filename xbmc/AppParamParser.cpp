@@ -25,7 +25,6 @@
 #include "utils/log.h"
 #include "utils/SystemInfo.h"
 #include "utils/StringUtils.h"
-#include "input/InputManager.h"
 #ifdef TARGET_WINDOWS
 #include "WIN32Util.h"
 #endif
@@ -48,22 +47,6 @@ void CAppParamParser::Parse(const char* const* argv, int nArgs)
     for (int i = 1; i < nArgs; i++)
     {
       ParseArg(argv[i]);
-      if (strnicmp(argv[i], "-l", 2) == 0 || strnicmp(argv[i], "--lircdev", 9) == 0)
-      {
-        // check the next arg with the proper value.
-        int next = i + 1;
-        if (next < nArgs)
-        {
-          if ((argv[next][0] != '-') && (argv[next][0] == '/'))
-          {
-            m_remoteControlName = argv[next];
-            i++;
-          }
-        }
-      }
-      else if (strnicmp(argv[i], "-n", 2) == 0 || strnicmp(argv[i], "--nolirc", 8) == 0)
-        m_remoteControlEnabled = false;
-
       if (stricmp(argv[i], "-d") == 0)
       {
         if (i + 1 < nArgs)
@@ -98,10 +81,6 @@ void CAppParamParser::DisplayHelp()
   printf("\t\t\tenables network settings.\n");
   printf("  -p or --portable\t%s will look for configurations in install folder instead of ~/.%s\n", CSysInfo::GetAppName().c_str(), lcAppName.c_str());
   printf("  --legacy-res\t\tEnables screen resolutions such as PAL, NTSC, etc.\n");
-#ifdef HAS_LIRC
-  printf("  -l or --lircdev\tLircDevice to use default is " LIRC_DEVICE " .\n");
-  printf("  -n or --nolirc\tdo not use Lirc, i.e. no remote input.\n");
-#endif
   printf("  --debug\t\tEnable debug logging\n");
   printf("  --version\t\tPrint version information\n");
   printf("  --test\t\tEnable test mode. [FILE] required.\n");

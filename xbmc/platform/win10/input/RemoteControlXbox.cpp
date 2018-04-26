@@ -19,11 +19,11 @@
  */
 
 #include "RemoteControlXbox.h"
-#include "input/InputManager.h"
+#include "AppInboundProtocol.h"
 #include "input/remote/IRRemote.h"
+#include "ServiceBroker.h"
 #include "threads/SystemClock.h"
 #include "utils/log.h"
-#include "ServiceBroker.h"
 
 #define XBOX_REMOTE_DEVICE_ID L"GIP:0000F50000000001"
 #define XBOX_REMOTE_DEVICE_NAME "Xbox One Game Controller"
@@ -33,29 +33,10 @@ using namespace Windows::Media;
 using namespace Windows::System;
 using namespace Windows::UI::Core;
 
-KODI::REMOTE::IRemoteControl* CRemoteControlXbox::CreateInstance()
-{
-  return new CRemoteControlXbox();
-}
-
-void CRemoteControlXbox::Register()
-{
-  CInputManager::RegisterRemoteControl(CRemoteControlXbox::CreateInstance);
-}
-
-bool CRemoteControlXbox::IsRemoteControlId(const std::wstring &deviceId)
-{
-  return deviceId.compare(XBOX_REMOTE_DEVICE_ID) == 0;
-}
-
 CRemoteControlXbox::CRemoteControlXbox()
-  : m_button(0)
-  , m_lastButton(0)
-  , m_bInitialized(false)
-  , m_holdTime(0)
+  : m_bInitialized(false)
   , m_firstClickTime(0)
   , m_lastKey(VirtualKey::None)
-  , m_deviceName(XBOX_REMOTE_DEVICE_NAME)
 {
 }
 
@@ -65,9 +46,9 @@ CRemoteControlXbox::~CRemoteControlXbox()
     Disconnect();
 }
 
-std::string CRemoteControlXbox::GetMapFile()
+bool CRemoteControlXbox::IsRemoteDevice(const std::wstring &deviceId) const
 {
-  return "";
+  return deviceId.compare(XBOX_REMOTE_DEVICE_ID) == 0;
 }
 
 void CRemoteControlXbox::Disconnect()
@@ -83,19 +64,13 @@ void CRemoteControlXbox::Disconnect()
   m_bInitialized = false;
 }
 
-void CRemoteControlXbox::Reset()
-{
-  m_button = 0;
-  m_holdTime = 0;
-}
-
 void CRemoteControlXbox::Initialize()
 {
   auto dispatcher = CoreWindow::GetForCurrentThread()->Dispatcher;
   m_token = dispatcher->AcceleratorKeyActivated += ref new TypedEventHandler<CoreDispatcher^, AcceleratorKeyEventArgs^>
-    ([this](CoreDispatcher^ sender, AcceleratorKeyEventArgs^ args) 
+    ([this](CoreDispatcher^ sender, AcceleratorKeyEventArgs^ args)
   {
-    if (IsRemoteControlId(args->DeviceId->Data()))
+    if (IsRemoteDevice(args->DeviceId->Data()))
       HandleAcceleratorKey(sender, args);
   });
 
@@ -112,33 +87,17 @@ void CRemoteControlXbox::Initialize()
   m_bInitialized = true;
 }
 
-void CRemoteControlXbox::Update()
-{
-  if (m_lastButton != 0)
-  {
-    m_button = m_lastButton;
-    m_lastButton = 0;
-  }
-}
-
-uint16_t CRemoteControlXbox::GetButton() const
-{
-  return m_button;
-}
-
-uint32_t CRemoteControlXbox::GetHoldTimeMs() const
-{
-  return m_holdTime;
-}
-
-
-
 void CRemoteControlXbox::HandleAcceleratorKey(CoreDispatcher^ sender, AcceleratorKeyEventArgs^ args)
 {
   auto button = TranslateVirtualKey(args->VirtualKey);
   if (!button)
     return;
-  
+
+  XBMC_Event newEvent;
+  newEvent.type = XBMC_BUTTON;
+  newEvent.keybutton.button = button;
+  newEvent.keybutton.holdtime = 0;
+
   switch (args->EventType)
   {
   case CoreAcceleratorKeyEventType::KeyDown:
@@ -148,23 +107,28 @@ void CRemoteControlXbox::HandleAcceleratorKey(CoreDispatcher^ sender, Accelerato
     {
       m_lastKey = args->VirtualKey;
       m_firstClickTime = XbmcThreads::SystemClockMillis();
-      m_holdTime = 0;
     }
     else
-      m_holdTime = XbmcThreads::SystemClockMillis() - m_firstClickTime;
+      newEvent.keybutton.holdtime = XbmcThreads::SystemClockMillis() - m_firstClickTime;
 
-    m_lastButton = button;
+    std::shared_ptr<CAppInboundProtocol> appPort;
+    appPort = CServiceBroker::GetAppPort();
+    if (appPort)
+      appPort->OnEvent(newEvent);
+
     break;
   }
   case CoreAcceleratorKeyEventType::KeyUp:
   case CoreAcceleratorKeyEventType::SystemKeyUp:
   {
     if (m_lastKey == args->VirtualKey)
-      m_holdTime = XbmcThreads::SystemClockMillis() - m_firstClickTime;
-    else
-      m_holdTime = 0;
+      newEvent.keybutton.holdtime = XbmcThreads::SystemClockMillis() - m_firstClickTime;
 
     m_lastKey = VirtualKey::None;
+    std::shared_ptr<CAppInboundProtocol> appPort;
+    appPort = CServiceBroker::GetAppPort();
+    if (appPort)
+      appPort->OnEvent(newEvent);
     break;
   }
   case CoreAcceleratorKeyEventType::Character:
@@ -180,7 +144,13 @@ void CRemoteControlXbox::HandleAcceleratorKey(CoreDispatcher^ sender, Accelerato
 
 void CRemoteControlXbox::HandleMediaButton(Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs^ args)
 {
-  m_lastButton = TranslateMediaKey(args->Button);
+  XBMC_Event newEvent;
+  newEvent.type = XBMC_BUTTON;
+  newEvent.keybutton.button = TranslateMediaKey(args->Button);;
+  newEvent.keybutton.holdtime = 0;
+  std::shared_ptr<CAppInboundProtocol> appPort = CServiceBroker::GetAppPort();
+  if (appPort)
+    appPort->OnEvent(newEvent);
 }
 
 int32_t CRemoteControlXbox::TranslateVirtualKey(Windows::System::VirtualKey vk)

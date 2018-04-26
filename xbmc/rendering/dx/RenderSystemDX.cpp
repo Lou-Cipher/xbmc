@@ -101,6 +101,14 @@ bool CRenderSystemDX::InitRenderSystem()
   CPoint camPoint = { outputSize.Width * 0.5f, outputSize.Height * 0.5f };
   SetCameraPosition(camPoint, outputSize.Width, outputSize.Height);
 
+  DXGI_ADAPTER_DESC AIdentifier = { 0 };
+  m_deviceResources->GetAdapterDesc(&AIdentifier);
+  m_RenderRenderer = KODI::PLATFORM::WINDOWS::FromW(AIdentifier.Description);
+  uint32_t version = 0;
+  for (uint32_t decimal = m_deviceResources->GetDeviceFeatureLevel() >> 8, round = 0; decimal > 0; decimal >>= 4, ++round)
+    version += (decimal % 16) * std::pow(10, round);
+  m_RenderVersion = StringUtils::Format("%.1f", static_cast<float>(version) / 10.0f);
+
   return true;
 }
 
@@ -148,7 +156,7 @@ bool CRenderSystemDX::DestroyRenderSystem()
 
 void CRenderSystemDX::CheckInterlacedStereoView()
 {
-  RENDER_STEREO_MODE stereoMode = g_graphicsContext.GetStereoMode();
+  RENDER_STEREO_MODE stereoMode = CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
 
   if ( m_rightEyeTex.Get()
     && RENDER_STEREO_MODE_INTERLACED    != stereoMode
@@ -165,7 +173,7 @@ void CRenderSystemDX::CheckInterlacedStereoView()
     if (!m_rightEyeTex.Create(outputSize.Width, outputSize.Height, 1, D3D11_USAGE_DEFAULT, DXGI_FORMAT_B8G8R8A8_UNORM))
     {
       CLog::Log(LOGERROR, "%s - Failed to create right eye buffer.", __FUNCTION__);
-      g_graphicsContext.SetStereoMode(RENDER_STEREO_MODE_SPLIT_HORIZONTAL); // try fallback to split horizontal
+      CServiceBroker::GetWinSystem()->GetGfxContext().SetStereoMode(RENDER_STEREO_MODE_SPLIT_HORIZONTAL); // try fallback to split horizontal
     }
     else
       m_deviceResources->Unregister(&m_rightEyeTex); // we will handle its health
@@ -307,7 +315,7 @@ bool CRenderSystemDX::EndRender()
   return true;
 }
 
-bool CRenderSystemDX::ClearBuffers(color_t color)
+bool CRenderSystemDX::ClearBuffers(UTILS::Color color)
 {
   if (!m_bRenderCreated)
     return false;

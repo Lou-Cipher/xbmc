@@ -350,6 +350,12 @@ namespace XBMCAddon
       return g_application.GetAppPlayer().IsPlayingRDS();
     }
 
+    bool Player::isExternalPlayer()
+    {
+      XBMC_TRACE;
+      return g_application.GetAppPlayer().IsExternalPlaying();
+    }
+
     String Player::getPlayingFile()
     {
       XBMC_TRACE;
@@ -365,7 +371,7 @@ namespace XBMCAddon
       if (!g_application.GetAppPlayer().IsPlayingVideo())
         throw PlayerException("XBMC is not playing any videofile");
 
-      const CVideoInfoTag* movie = g_infoManager.GetCurrentMovieTag();
+      const CVideoInfoTag* movie = CServiceBroker::GetGUI()->GetInfoManager().GetCurrentMovieTag();
       if (movie)
         return new InfoTagVideo(*movie);
 
@@ -378,7 +384,7 @@ namespace XBMCAddon
       if (g_application.GetAppPlayer().IsPlayingVideo() || !g_application.GetAppPlayer().IsPlayingAudio())
         throw PlayerException("XBMC is not playing any music file");
 
-      const MUSIC_INFO::CMusicInfoTag* tag = g_infoManager.GetCurrentSongTag();
+      const MUSIC_INFO::CMusicInfoTag* tag = CServiceBroker::GetGUI()->GetInfoManager().GetCurrentSongTag();
       if (tag)
         return new InfoTagMusic(*tag);
 
@@ -399,11 +405,11 @@ namespace XBMCAddon
     {
       XBMC_TRACE;
       if (g_application.GetAppPlayer().IsPlayingVideo() || !g_application.GetAppPlayer().IsPlayingRDS())
-        throw PlayerException("XBMC is not playing any music file with RDS");
+        throw PlayerException("Kodi is not playing any music file with RDS");
 
-      const PVR::CPVRRadioRDSInfoTagPtr tag = g_infoManager.GetCurrentRadioRDSInfoTag();
-      if (tag)
-        return new InfoTagRadioRDS(tag);
+      std::shared_ptr<CFileItem> item = g_application.CurrentFileItemPtr();
+      if (item && item->HasPVRRadioRDSInfoTag())
+        return new InfoTagRadioRDS(item->GetPVRRadioRDSInfoTag());
 
       return new InfoTagRadioRDS();
     }

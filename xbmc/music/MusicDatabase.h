@@ -318,11 +318,14 @@ public:
   bool ClearArtistLastScrapedTime(int idArtist);
   int  AddArtistDiscography(int idArtist, const std::string& strAlbum, const std::string& strYear);
   bool DeleteArtistDiscography(int idArtist);
+  bool GetArtistDiscography(int idArtist, CFileItemList& items);
 
   std::string GetArtistById(int id);
   int GetArtistByName(const std::string& strArtist);
   int GetArtistByMatch(const CArtist& artist);
   bool GetArtistFromSong(int idSong, CArtist &artist);
+  bool IsSongArtist(int idSong, int idArtist);
+  bool IsSongAlbumArtist(int idSong, int idArtist);
   std::string GetRoleById(int id);
 
   /*! \brief Propagate artist sort name into the concatenated artist sort name strings
@@ -339,7 +342,9 @@ public:
   bool GetPaths(std::set<std::string> &paths);
   bool SetPathHash(const std::string &path, const std::string &hash);
   bool GetPathHash(const std::string &path, std::string &hash);
+  bool GetAlbumPaths(int idAlbum, std::vector<std::pair<std::string, int>>& paths);
   bool GetAlbumPath(int idAlbum, std::string &basePath);
+  int GetDiscnumberForPathID(int idPath);
   bool GetOldArtistPath(int idArtist, std::string &path);
   bool GetArtistPath(const CArtist& artist, std::string &path);
   bool GetAlbumFolder(const CAlbum& album, const std::string &strAlbumPath, std::string &strFolder);
@@ -474,7 +479,6 @@ public:
   /////////////////////////////////////////////////
   // Art
   /////////////////////////////////////////////////
-  bool SaveAlbumThumb(int idAlbum, const std::string &thumb);
   /*! \brief Sets art for a database item.
    Sets a single piece of art for a database item.
    \param mediaId the id in the media (song/artist/album) table.

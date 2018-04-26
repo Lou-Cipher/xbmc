@@ -57,7 +57,7 @@ bool CRetroPlayerAudio::OpenStream(AEDataFormat format, unsigned int samplerate,
   audioFormat.m_dataFormat = format;
   audioFormat.m_sampleRate = samplerate;
   audioFormat.m_channelLayout = channelLayout;
-  m_pAudioStream = CServiceBroker::GetActiveAE().MakeStream(audioFormat);
+  m_pAudioStream = CServiceBroker::GetActiveAE()->MakeStream(audioFormat);
 
   if (!m_pAudioStream)
   {
@@ -90,7 +90,7 @@ void CRetroPlayerAudio::CloseStream()
   {
     CLog::Log(LOGDEBUG, "RetroPlayer[AUDIO]: Closing audio stream");
 
-    CServiceBroker::GetActiveAE().FreeStream(m_pAudioStream);
+    CServiceBroker::GetActiveAE()->FreeStream(m_pAudioStream);
     m_pAudioStream = nullptr;
   }
 }
