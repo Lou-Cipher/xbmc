@@ -1120,6 +1120,11 @@ std::string CWinSystemWin32::GetClipboardText()
   return utf8_text;
 }
 
+bool CWinSystemWin32::UseLimitedColor()
+{
+  return CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOSCREEN_LIMITEDRANGE);
+}
+
 void CWinSystemWin32::NotifyAppFocusChange(bool bGaining)
 {
   if (m_state == WINDOW_STATE_FULLSCREEN && !m_IsAlteringWindow)
@@ -1169,4 +1174,9 @@ void CWinSystemWin32::UpdateStates(bool fullScreen)
 WINDOW_STATE CWinSystemWin32::GetState(bool fullScreen) const
 {
   return static_cast<WINDOW_STATE>(fullScreen ? m_fullscreenState : m_windowState);
+}
+
+bool CWinSystemWin32::MessagePump()
+{
+  return m_winEvents->MessagePump();
 }

@@ -75,6 +75,8 @@ public:
   void FinishModeChange(RESOLUTION res) override;
   void FinishWindowResize(int newWidth, int newHeight) override;
 
+  bool UseLimitedColor() override;
+
   void UpdateResolutions() override;
   int GetNumScreens() override;
   int GetCurrentScreen() override;
@@ -100,6 +102,9 @@ public:
 
   // Like CWinSystemX11
   void GetConnectedOutputs(std::vector<std::string>* outputs);
+
+  // winevents override
+  bool MessagePump() override;
 
 protected:
   std::unique_ptr<KODI::WINDOWING::IOSScreenSaver> GetOSScreenSaverImpl() override;

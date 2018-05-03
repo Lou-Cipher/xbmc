@@ -739,6 +739,11 @@ std::string CWinSystemWin10::GetClipboardText()
   return KODI::PLATFORM::WINDOWS::FromW(unicode_text);
 }
 
+bool CWinSystemWin10::UseLimitedColor()
+{
+  return CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOSCREEN_LIMITEDRANGE);
+}
+
 void CWinSystemWin10::NotifyAppFocusChange(bool bGaining)
 {
   m_inFocus = bGaining;
@@ -753,6 +758,11 @@ void CWinSystemWin10::UpdateStates(bool fullScreen)
 WINDOW_STATE CWinSystemWin10::GetState(bool fullScreen) const
 {
   return static_cast<WINDOW_STATE>(fullScreen ? m_fullscreenState : m_windowState);
+}
+
+bool CWinSystemWin10::MessagePump()
+{
+  return m_winEvents->MessagePump();
 }
 
 #pragma pack(pop)

@@ -443,6 +443,11 @@ void CWinSystemWayland::GetConnectedOutputs(std::vector<std::string>* outputs)
                    return UserFriendlyOutputName(pair.second); });
 }
 
+bool CWinSystemWayland::UseLimitedColor()
+{
+  return CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOSCREEN_LIMITEDRANGE);
+}
+
 void CWinSystemWayland::UpdateResolutions()
 {
   CWinSystemBase::UpdateResolutions();
@@ -1530,4 +1535,9 @@ void CWinSystemWayland::OnWindowMaximize()
 void CWinSystemWayland::OnClose()
 {
   KODI::MESSAGING::CApplicationMessenger::GetInstance().PostMsg(TMSG_QUIT);
+}
+
+bool CWinSystemWayland::MessagePump()
+{
+  return m_winEvents->MessagePump();
 }

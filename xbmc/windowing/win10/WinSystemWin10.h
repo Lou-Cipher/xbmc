@@ -106,6 +106,8 @@ public:
   bool Hide() override;
   bool Show(bool raise = true) override;
   std::string GetClipboardText() override;
+  bool UseLimitedColor() override;
+
   // videosync
   std::unique_ptr<CVideoSync> GetVideoSync(void *clock) override;
 
@@ -124,6 +126,9 @@ public:
   Windows::UI::Core::CoreWindow^ GetCoreWindow() { return m_coreWindow.Get(); }
 
   bool CanDoWindowed() override;
+
+  // winevents override
+  bool MessagePump() override;
 
 protected:
   bool CreateNewWindow(const std::string& name, bool fullScreen, RESOLUTION_INFO& res) override = 0;

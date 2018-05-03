@@ -1701,6 +1701,11 @@ void CWinSystemOSX::OnMove(int x, int y)
   HandlePossibleRefreshrateChange();
 }
 
+bool CWinSystemOSX::UseLimitedColor()
+{
+  return CServiceBroker::GetSettings().GetBool(CSettings::SETTING_VIDEOSCREEN_LIMITEDRANGE);
+}
+
 std::unique_ptr<IOSScreenSaver> CWinSystemOSX::GetOSScreenSaverImpl()
 {
   return std::unique_ptr<IOSScreenSaver> (new COSScreenSaverOSX);
@@ -1879,4 +1884,9 @@ std::unique_ptr<CVideoSync> CWinSystemOSX::GetVideoSync(void *clock)
 {
   std::unique_ptr<CVideoSync> pVSync(new CVideoSyncOsx(clock));
   return pVSync;
+}
+
+bool CWinSystemOSX::MessagePump()
+{
+  return m_winEvents->MessagePump();
 }

@@ -58,6 +58,7 @@ public:
   virtual bool Hide() override;
   virtual bool Show(bool raise = true) override;
   virtual void OnMove(int x, int y) override;
+  bool UseLimitedColor() override;
 
   virtual std::string GetClipboardText(void) override;
 
@@ -79,6 +80,9 @@ public:
 
   void* GetCGLContextObj();
   void* GetNSOpenGLContext();
+
+  // winevents override
+  bool MessagePump() override;
 
 protected:
   virtual std::unique_ptr<KODI::WINDOWING::IOSScreenSaver> GetOSScreenSaverImpl() override;
