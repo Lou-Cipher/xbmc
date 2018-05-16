@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2005-2017 Team Kodi
+ *      Copyright (C) 2018 Chris Browet
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -18,16 +18,16 @@
  *
  */
 
-#include <dbghelp.h>
-#include <shellapi.h>
+#include "OSScreenSaverAndroid.h"
 
-#include "Win10Main.h"
-#include "Win10App.h"
+#include "platform/android/activity/XBMCApp.h"
 
-using namespace Windows::ApplicationModel::Core;
-using namespace KODI::PLATFORM::WINDOWS10;
-
-DECLDIR IFrameworkViewSource^ GetViewProvider()
+void COSScreenSaverAndroid::Inhibit()
 {
-  return ref new ViewProvider();
+  CXBMCApp::get()->EnableWakeLock(true);
+}
+
+void COSScreenSaverAndroid::Uninhibit()
+{
+  CXBMCApp::get()->EnableWakeLock(false);
 }

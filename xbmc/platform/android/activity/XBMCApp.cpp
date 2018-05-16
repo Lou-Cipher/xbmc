@@ -95,6 +95,7 @@
 #include "utils/URIUtils.h"
 #include "utils/Variant.h"
 #include "windowing/android/VideoSyncAndroid.h"
+#include "windowing/WinSystem.h"
 #include "windowing/WinEvents.h"
 #include "platform/xbmc.h"
 
@@ -228,10 +229,8 @@ void CXBMCApp::onResume()
 {
   android_printf("%s: ", __PRETTY_FUNCTION__);
 
-  if (!g_application.IsInScreenSaver())
+  if (g_application.IsInitialized() && CServiceBroker::GetWinSystem()->GetOSScreenSaver()->IsInhibited())
     EnableWakeLock(true);
-  else
-    g_application.WakeUpScreenSaverAndDPMS();
 
   CJNIAudioManager audioManager(getSystemService("audio"));
   m_headsetPlugged = audioManager.isWiredHeadsetOn() || audioManager.isBluetoothA2dpOn();
@@ -456,16 +455,10 @@ void CXBMCApp::run()
 
   m_firstrun=false;
   android_printf(" => running XBMC_Run...");
-  try
-  {
-    CAppParamParser appParamParser;
-    status = XBMC_Run(true, appParamParser);
-    android_printf(" => XBMC_Run finished with %d", status);
-  }
-  catch(...)
-  {
-    android_printf("ERROR: Exception caught on main loop. Exiting");
-  }
+
+  CAppParamParser appParamParser;
+  status = XBMC_Run(true, appParamParser);
+  android_printf(" => XBMC_Run finished with %d", status);
 
   // If we are have not been force by Android to exit, notify its finish routine.
   // This will cause android to run through its teardown events, it calls:

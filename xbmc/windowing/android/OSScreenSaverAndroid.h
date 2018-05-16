@@ -1,6 +1,5 @@
-#pragma once
 /*
- *      Copyright (C) 2005-2017 Team Kodi
+ *      Copyright (C) 2018 Chris Browet
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -18,13 +17,14 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
-#include <memory>
+#include "../OSScreenSaver.h"
 
-#if defined XBMC_EXPORT
-#define DECLDIR __declspec(dllexport)
-#else
-#define DECLDIR __declspec(dllimport)
-#endif
-
-DECLDIR Windows::ApplicationModel::Core::IFrameworkViewSource^ GetViewProvider();
+class COSScreenSaverAndroid : public KODI::WINDOWING::IOSScreenSaver
+{
+public:
+  explicit COSScreenSaverAndroid() {}
+  void Inhibit() override;
+  void Uninhibit() override;
+};

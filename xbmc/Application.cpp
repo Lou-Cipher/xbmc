@@ -2457,7 +2457,9 @@ void CApplication::OnApplicationMessage(ThreadMessage* pMsg)
         CLog::Log(LOGNOTICE, "%s: Failed to suspend AudioEngine before launching external program", __FUNCTION__);
       }
     }
-#if defined( TARGET_POSIX) && !defined(TARGET_DARWIN)
+#if defined(TARGET_DARWIN)
+    CLog::Log(LOGNOTICE, "ExecWait is not implemented on this platform");
+#elif defined(TARGET_POSIX)
     CUtil::RunCommandLine(pMsg->strParam.c_str(), (pMsg->param1 == 1));
 #elif defined(TARGET_WINDOWS)
     CWIN32Util::XBMCShellExecute(pMsg->strParam.c_str(), (pMsg->param1 == 1));
@@ -3210,6 +3212,8 @@ bool CApplication::PlayFile(CFileItem item, const std::string& player, bool bRes
   else
     options.fullscreen = g_advancedSettings.m_fullScreenOnMovieStart && !CMediaSettings::GetInstance().DoesVideoStartWindowed();
 
+  options.preferStereo = CServiceBroker::GetActiveAE()->HasStereoAudioChannelCount();
+
   // reset VideoStartWindowed as it's a temp setting
   CMediaSettings::GetInstance().SetVideoStartWindowed(false);
 
@@ -3336,6 +3340,8 @@ void CApplication::OnPlayBackStarted(const CFileItem &file)
 
   CServiceBroker::GetPVRManager().OnPlaybackStarted(m_itemCurrentFile);
   m_stackHelper.OnPlayBackStarted(file);
+
+  m_playerEvent.Reset();
 
   CGUIMessage msg(GUI_MSG_PLAYBACK_STARTED, 0, 0);
   CServiceBroker::GetGUI()->GetWindowManager().SendThreadMessage(msg);
@@ -3674,10 +3680,6 @@ bool CApplication::WakeUpScreenSaverAndDPMS(bool bPowerOffKeyPressed /* = false 
     CVariant data(CVariant::VariantTypeObject);
     data["shuttingdown"] = bPowerOffKeyPressed;
     CAnnouncementManager::GetInstance().Announce(GUI, "xbmc", "OnScreensaverDeactivated", data);
-#ifdef TARGET_ANDROID
-    // Screensaver deactivated -> acquire wake lock
-    CXBMCApp::EnableWakeLock(true);
-#endif
   }
 
   return result;
@@ -3890,10 +3892,6 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
   if (m_screensaverIdInUse == "screensaver.xbmc.builtin.dim" ||
       m_screensaverIdInUse == "screensaver.xbmc.builtin.black")
   {
-#ifdef TARGET_ANDROID
-    // Default screensaver activated -> release wake lock
-    CXBMCApp::EnableWakeLock(false);
-#endif
     return;
   }
   else if (m_screensaverIdInUse.empty())
@@ -4047,9 +4045,8 @@ bool CApplication::OnMessage(CGUIMessage& message)
       CAnnouncementManager::GetInstance().Announce(Player, "xbmc", "OnPlay", m_itemCurrentFile, param);
 
       // we don't want a busy dialog when switching channels
-      if (!m_itemCurrentFile->IsLiveTV() && m_playerEvent.Signaled())
+      if (!m_itemCurrentFile->IsLiveTV())
       {
-        m_playerEvent.Reset();
         CGUIDialogBusy* dialog = CServiceBroker::GetGUI()->GetWindowManager().GetWindow<CGUIDialogBusy>(WINDOW_DIALOG_BUSY);
         if (dialog)
           dialog->WaitOnEvent(m_playerEvent);

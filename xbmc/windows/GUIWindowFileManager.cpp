@@ -105,7 +105,7 @@ public:
   }
   void Run() override
   {
-    m_result = m_dir.GetDirectory(m_url, m_items, false);
+    m_result = m_dir.GetDirectory(m_url, m_items, false, false);
   }
   void Cancel() override
   {
@@ -1188,7 +1188,7 @@ int64_t CGUIWindowFileManager::CalculateFolderSize(const std::string &strDirecto
   CFileItemList items;
   CVirtualDirectory rootDir;
   rootDir.SetSources(*CMediaSourceSettings::GetInstance().GetSources("files"));
-  rootDir.GetDirectory(pathToUrl, items, false);
+  rootDir.GetDirectory(pathToUrl, items, false, false);
   for (int i=0; i < items.Size(); i++)
   {
     if (items[i]->m_bIsFolder && !items[i]->IsParentFolder()) // folder
@@ -1294,7 +1294,11 @@ void CGUIWindowFileManager::SetInitialPath(const std::string &path)
       VECSOURCES shares;
       m_rootDir.GetSources(shares);
       int iIndex = CUtil::GetMatchingSource(strDestination, shares, bIsSourceName);
-      if (iIndex > -1)
+      if (iIndex > -1
+#if defined(TARGET_DARWIN_IOS)
+          || URIUtils::PathHasParent(strDestination, "special://envhome/Documents/Inbox/")
+#endif
+          || URIUtils::PathHasParent(strDestination, "special://profile/"))
       {
         // set current directory to matching share
         std::string path;

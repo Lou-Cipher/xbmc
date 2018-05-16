@@ -2317,7 +2317,7 @@ msgctxt "#504"
 msgid "Empty"
 msgstr ""
 
-#. label for library update progress bar when scanning media files 
+#. label for library update progress bar when scanning media files
 #: xbmc/music/infoscanner/MusicInfoScanner.cpp
 msgctxt "#505"
 msgid "Loading media information from files..."
@@ -7160,7 +7160,18 @@ msgctxt "#13459"
 msgid "Use OMXPlayer for decoding of video files."
 msgstr ""
 
-#empty strings from id 13460 to 13504
+#: system/settings/settings.xml
+msgctxt "#13460"
+msgid "Use HEVC VAAPI"
+msgstr ""
+
+#. Description of setting with label #13460 "Use HEVC VAAPI"
+#: system/settings/settings.xml
+msgctxt "#13461"
+msgid "Enable this option to use hardware acceleration for the HEVC codec. If disabled the CPU will be used instead."
+msgstr ""
+
+#empty strings from id 13462 to 13504
 
 #: system/settings/settings.xml
 msgctxt "#13505"
@@ -7208,6 +7219,7 @@ msgctxt "#13513"
 msgid "Remote art"
 msgstr ""
 
+#: xbmc/music/dialogs/GUIDialogMusicInfo.cpp
 #: xbmc/video/dialogs/GUIDialogVideoInfo.cpp
 msgctxt "#13514"
 msgid "Local art"
@@ -12312,6 +12324,7 @@ msgstr ""
 
 #: system/settings/settings.xml
 #: xbmc/settings/dialogs/GUIDialogLibExportSettings.cpp
+#: xbmc/music/dialogs/GUIDialogMusicInfo.cpp
 msgctxt "#20223"
 msgid "Artist information folder"
 msgstr ""
