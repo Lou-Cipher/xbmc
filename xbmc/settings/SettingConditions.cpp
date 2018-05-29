@@ -20,7 +20,7 @@
 
 #include "SettingConditions.h"
 #include "Application.h"
-#include "GUIPassword.h"
+#include "LockType.h"
 #include "Util.h"
 #include "addons/AddonManager.h"
 #include "addons/binary-addons/BinaryAddonManager.h"
@@ -328,6 +328,9 @@ void CSettingConditions::Initialize(const CProfilesManager &profileManager)
 #endif
 #ifdef TARGET_DARWIN
   m_simpleConditions.insert("HasVTB");
+#endif
+#ifdef TARGET_DARWIN_OSX
+  m_simpleConditions.insert("have_osx");
 #endif
 #ifdef HAS_LIBAMCODEC
   if (aml_present())

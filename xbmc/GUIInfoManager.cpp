@@ -395,7 +395,8 @@ const infomap player_labels[] =  {{ "hasmedia",         PLAYER_HAS_MEDIA },     
                                   { "tempoenabled", PLAYER_SUPPORTS_TEMPO},
                                   { "istempo", PLAYER_IS_TEMPO},
                                   { "playspeed", PLAYER_PLAYSPEED},
-                                  { "hasprograms", PLAYER_HAS_PROGRAMS}};
+                                  { "hasprograms", PLAYER_HAS_PROGRAMS},
+                                  { "hasresolutions", PLAYER_HAS_RESOLUTIONS}};
 
 /// \page modules__General__List_of_gui_access
 /// @{
@@ -6173,6 +6174,8 @@ int CGUIInfoManager::TranslateSingleString(const std::string &strCondition, bool
       }
       else if (platform == "windows")
         return SYSTEM_PLATFORM_WINDOWS;
+      else if (platform == "uwp")
+        return SYSTEM_PLATFORM_UWP;
       else if (platform == "darwin")
         return SYSTEM_PLATFORM_DARWIN;
       else if (platform == "osx")
