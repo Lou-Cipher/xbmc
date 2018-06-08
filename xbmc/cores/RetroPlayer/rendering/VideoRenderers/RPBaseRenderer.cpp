@@ -28,9 +28,10 @@
 #include "utils/MathUtils.h"
 #include "ServiceBroker.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <algorithm>
+#include <utility>
 
 using namespace KODI;
 using namespace RETRO;
@@ -268,49 +269,37 @@ void CRPBaseRenderer::CalculateViewMode(VIEWMODE viewMode, unsigned int sourceWi
 
 std::array<CPoint, 4> CRPBaseRenderer::ReorderDrawPoints(const CRect &destRect, const CRect &viewRect, unsigned int orientationDegCCW, float aspectRatio)
 {
-  std::array<CPoint, 4> rotatedDestCoords;
-
-  // 0 - top left, 1 - top right, 2 - bottom right, 3 - bottom left
-  float origMat[4][2] =
-    {
-      { destRect.x1, destRect.y1 },
-      { destRect.x2, destRect.y1 },
-      { destRect.x2, destRect.y2 },
-      { destRect.x1, destRect.y2 }
-    };
-
-  bool changeAspect = false;
-  int pointOffset = 0;
+  std::array<CPoint, 4> rotatedDestCoords =
+  {{
+    CPoint{ destRect.x1, destRect.y1 }, // Top left
+    CPoint{ destRect.x2, destRect.y1 }, // Top right
+    CPoint{ destRect.x2, destRect.y2 }, // Bottom right
+    CPoint{ destRect.x1, destRect.y2 }, // Bottom left
+  }};
 
   switch (orientationDegCCW)
   {
-  case 270:
-    pointOffset = 1;
-    changeAspect = true;
-    break;
   case 180:
-    pointOffset = 2;
-    break;
-  case 90:
-    pointOffset = 3;
-    changeAspect = true;
+  {
+    std::swap(rotatedDestCoords[0], rotatedDestCoords[2]);
+    std::swap(rotatedDestCoords[1], rotatedDestCoords[3]);
     break;
   }
-
-  float diffX = 0.0f;
-  float diffY = 0.0f;
-  float centerX = 0.0f;
-  float centerY = 0.0f;
-
-  if (changeAspect) // We are either rotating by 90 or 270 degrees which inverts aspect ratio
+  case 90:
+  case 270:
   {
-    float newWidth = destRect.Height(); // New width is old height
-    float newHeight = destRect.Width(); // New height is old width
-    float diffWidth = newWidth - destRect.Width(); // Difference between old and new width
-    float diffHeight = newHeight - destRect.Height(); // Difference between old and new height
+    const float oldWidth = destRect.Width();
+    const float oldHeight = destRect.Height();
 
-    // If the new width is bigger then the old or the new height is bigger
-    // then the old, we need to scale down
+    // New width is old height, new height is old width
+    float newWidth = oldHeight;
+    float newHeight = oldWidth;
+
+    const float diffWidth = newWidth - oldWidth;
+    const float diffHeight = newHeight - oldHeight;
+
+    // If the new width or new height is bigger than the old, we need to
+    // scale down
     if (diffWidth > 0.0f || diffHeight > 0.0f)
     {
       // Scale to fit screen width because the difference in width is bigger
@@ -318,58 +307,70 @@ std::array<CPoint, 4> CRPBaseRenderer::ReorderDrawPoints(const CRect &destRect, 
       if (diffWidth > diffHeight)
       {
         // Clamp to the width of the old dest rect
-        newWidth = destRect.Width();
+        newWidth = oldWidth;
         newHeight *= aspectRatio;
       }
       else // Scale to fit screen height
       {
         // Clamp to the height of the old dest rect
-        newHeight = destRect.Height();
+        newHeight = oldHeight;
         newWidth /= aspectRatio;
       }
     }
 
     // Calculate the center point of the view
-    centerX = viewRect.x1 + viewRect.Width() / 2.0f;
-    centerY = viewRect.y1 + viewRect.Height() / 2.0f;
+    const float centerX = viewRect.x1 + viewRect.Width() / 2.0f;
+    const float centerY = viewRect.y1 + viewRect.Height() / 2.0f;
 
     // Calculate the number of pixels we need to go in each x direction from
     // the center point
-    diffX = newWidth / 2;
+    const float diffX = newWidth / 2;
     // Calculate the number of pixels we need to go in each y direction from
     // the center point
-    diffY = newHeight / 2;
-  }
+    const float diffY = newHeight / 2;
 
-  for (int destIdx = 0, srcIdx = pointOffset; destIdx < 4; destIdx++)
-  {
-    rotatedDestCoords[destIdx].x = origMat[srcIdx][0];
-    rotatedDestCoords[destIdx].y = origMat[srcIdx][1];
-
-    if (changeAspect)
+    unsigned int pointOffset;
+    switch (orientationDegCCW)
     {
-      switch (srcIdx)
+    case 90:
+      pointOffset = 3;
+      break;
+    case 270:
+      pointOffset = 1;
+      break;
+    default:
+      break;
+    }
+
+    for (unsigned int i = 0; i < rotatedDestCoords.size(); i++)
+    {
+      switch ((i + pointOffset) % 4)
       {
       case 0:// top left
-        rotatedDestCoords[destIdx].x = centerX - diffX;
-        rotatedDestCoords[destIdx].y = centerY - diffY;
+        rotatedDestCoords[i].x = centerX - diffX;
+        rotatedDestCoords[i].y = centerY - diffY;
         break;
       case 1:// top right
-        rotatedDestCoords[destIdx].x = centerX + diffX;
-        rotatedDestCoords[destIdx].y = centerY - diffY;
+        rotatedDestCoords[i].x = centerX + diffX;
+        rotatedDestCoords[i].y = centerY - diffY;
         break;
       case 2:// bottom right
-        rotatedDestCoords[destIdx].x = centerX + diffX;
-        rotatedDestCoords[destIdx].y = centerY + diffY;
+        rotatedDestCoords[i].x = centerX + diffX;
+        rotatedDestCoords[i].y = centerY + diffY;
         break;
       case 3:// bottom left
-        rotatedDestCoords[destIdx].x = centerX - diffX;
-        rotatedDestCoords[destIdx].y = centerY + diffY;
+        rotatedDestCoords[i].x = centerX - diffX;
+        rotatedDestCoords[i].y = centerY + diffY;
+        break;
+      default:
         break;
       }
     }
-    srcIdx++;
-    srcIdx = srcIdx % 4;
+
+    break;
+  }
+  default:
+    break;
   }
 
   return rotatedDestCoords;
