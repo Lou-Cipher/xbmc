@@ -396,9 +396,18 @@ void CRPWinRenderer::Render(CD3DTexture *target)
 
       // Use the picked output shader to render to the target
       if (outputShader)
+      {
+        const CPoint destPoints[4] = {
+          m_rotatedDestCoords[0],
+          m_rotatedDestCoords[1],
+          m_rotatedDestCoords[2],
+          m_rotatedDestCoords[3]
+        };
+
         outputShader->Render(*intermediateTarget, m_sourceWidth, m_sourceHeight,
-          m_sourceRect, m_rotatedDestCoords, viewPort, target,
+          m_sourceRect, destPoints, viewPort, target,
           m_context.UseLimitedColor() ? 1 : 0);
+      }
     }
   }
 }

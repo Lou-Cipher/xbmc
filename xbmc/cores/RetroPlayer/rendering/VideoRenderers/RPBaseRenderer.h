@@ -27,7 +27,7 @@ extern "C" {
 #include "libavutil/pixfmt.h"
 }
 
-#include <atomic>
+#include <array>
 #include <memory>
 #include <stdint.h>
 
@@ -110,7 +110,6 @@ namespace RETRO
     AVPixelFormat m_format = AV_PIX_FMT_NONE;
     unsigned int m_sourceWidth = 0;
     unsigned int m_sourceHeight = 0;
-    float m_sourceFrameRatio = 1.0f;
     unsigned int m_renderOrientation = 0; // Degrees counter-clockwise
 
     /*!
@@ -128,10 +127,9 @@ namespace RETRO
     IRenderBuffer *m_renderBuffer = nullptr;
 
     // Geometry properties
-    CPoint m_rotatedDestCoords[4];
+    std::array<CPoint, 4> m_rotatedDestCoords;
     CRect m_oldDestRect; // destrect of the previous frame
     CRect m_sourceRect; // original size of the video
-    CRect m_viewRect; // entire target rendering area for the video (including black bars)
 
     // ====== Video Shader Members =====
     void UpdateVideoShaders();
@@ -146,13 +144,15 @@ namespace RETRO
      */
     void PostRender();
 
-    void CalcNormalRenderRect(float offsetX, float offsetY, float width, float height, float inputFrameRatio, float zoomAmount);
-    void CalculateViewMode();
+    void GetScreenDimensions(float &screenWidth, float &screenHeight);
 
-    void UpdateDrawPoints(const CRect &destRect);
-    void ReorderDrawPoints();
+    static void CalcNormalRenderRect(const CRect &viewRect, float inputFrameRatio, float zoomAmount, float pixelRatio, CRect &sourceRect, CRect &destRect);
+    static void ClipRect(const CRect &viewRect, CRect &sourceRect, CRect &destRect);
+    static void CalculateViewMode(VIEWMODE viewMode, unsigned int sourceWidth, unsigned int sourceHeight, float screenWidth, float screenHeight, float &pixelRatio, float &zoomAmount);
+
+    static std::array<CPoint, 4> ReorderDrawPoints(const CRect &destRect, const CRect &viewRect, unsigned int orientationDegCCW, float aspectRatio);
     void MarkDirty();
-    float GetAllowedErrorInAspect() const;
+    static float GetAllowedErrorInAspect();
 
     uint64_t m_renderFrameCount = 0;
     uint64_t m_lastRender = 0;

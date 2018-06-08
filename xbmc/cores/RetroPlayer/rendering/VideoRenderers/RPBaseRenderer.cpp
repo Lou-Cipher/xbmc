@@ -84,7 +84,6 @@ bool CRPBaseRenderer::Configure(AVPixelFormat format, unsigned int width, unsign
   m_format = format;
   m_sourceWidth = width;
   m_sourceHeight = height;
-  m_sourceFrameRatio = static_cast<float>(width) / static_cast<float>(height);
   m_renderOrientation = 0; //! @todo
 
   if (!m_bufferPool->IsConfigured())
@@ -160,7 +159,7 @@ void CRPBaseRenderer::SetSpeed(double speed)
 
 float CRPBaseRenderer::GetAspectRatio() const
 {
-  return m_sourceFrameRatio;
+  return static_cast<float>(m_sourceWidth) / static_cast<float>(m_sourceHeight);
 }
 
 void CRPBaseRenderer::SetShaderPreset(const std::string &presetPath)
@@ -180,7 +179,11 @@ void CRPBaseRenderer::SetScalingMethod(SCALINGMETHOD method)
 void CRPBaseRenderer::SetViewMode(VIEWMODE viewMode)
 {
   m_renderSettings.VideoSettings().SetRenderViewMode(viewMode);
-  CalculateViewMode();
+
+  float screenWidth;
+  float screenHeight;
+  GetScreenDimensions(screenWidth, screenHeight);
+  CalculateViewMode(viewMode, m_sourceWidth, m_sourceHeight, screenWidth, screenHeight, m_pixelRatio, m_zoomAmount);
 }
 
 void CRPBaseRenderer::SetRenderRotation(unsigned int rotationDegCCW)
@@ -188,22 +191,13 @@ void CRPBaseRenderer::SetRenderRotation(unsigned int rotationDegCCW)
   m_renderSettings.VideoSettings().SetRenderRotation(rotationDegCCW);
 }
 
-void CRPBaseRenderer::CalculateViewMode()
+void CRPBaseRenderer::GetScreenDimensions(float &screenWidth, float &screenHeight)
 {
-  const VIEWMODE viewMode = m_renderSettings.VideoSettings().GetRenderViewMode();
-
-  // Parameters to determine
-  float &pixelRatio = m_pixelRatio;
-  float &zoomAmount = m_zoomAmount;
-
   // Get our calibrated full screen resolution
   RESOLUTION_INFO info = m_context.GetResInfo();
 
-  float screenWidth = static_cast<float>(info.Overscan.right - info.Overscan.left);
-  float screenHeight = static_cast<float>(info.Overscan.bottom - info.Overscan.top);
-
-  // And the source frame ratio
-  float sourceFrameRatio = GetAspectRatio();
+  screenWidth = static_cast<float>(info.Overscan.right - info.Overscan.left);
+  screenHeight = static_cast<float>(info.Overscan.bottom - info.Overscan.top);
 
   // Splitres scaling factor
   float xscale = static_cast<float>(info.iScreenWidth) / static_cast<float>(info.iWidth);
@@ -211,6 +205,11 @@ void CRPBaseRenderer::CalculateViewMode()
 
   screenWidth *= xscale;
   screenHeight *= yscale;
+}
+
+void CRPBaseRenderer::CalculateViewMode(VIEWMODE viewMode, unsigned int sourceWidth, unsigned int sourceHeight, float screenWidth, float screenHeight, float &pixelRatio, float &zoomAmount)
+{
+  const float sourceFrameRatio = static_cast<float>(sourceWidth) / static_cast<float>(sourceHeight);
 
   switch (viewMode)
   {
@@ -230,7 +229,7 @@ void CRPBaseRenderer::CalculateViewMode()
     zoomAmount = 1.0f;
 
     // Stretch to the limits of the 16:9 screen
-    pixelRatio = (screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio;
+    pixelRatio = (screenWidth / screenHeight) / sourceFrameRatio;
 
     break;
   }
@@ -241,7 +240,7 @@ void CRPBaseRenderer::CalculateViewMode()
 
     // Get the size of the media file
     // Calculate the desired output ratio
-    float outputFrameRatio = sourceFrameRatio * pixelRatio / info.fPixelRatio;
+    float outputFrameRatio = sourceFrameRatio * pixelRatio;
 
     // Now calculate the correct zoom amount.  First zoom to full width.
     float newHeight = screenWidth / outputFrameRatio;
@@ -252,7 +251,7 @@ void CRPBaseRenderer::CalculateViewMode()
     }
 
     // Now work out the zoom amount so that no zoom is done
-    zoomAmount = m_sourceHeight / newHeight;
+    zoomAmount = sourceHeight / newHeight;
 
     break;
   }
@@ -267,10 +266,9 @@ void CRPBaseRenderer::CalculateViewMode()
   }
 }
 
-inline void CRPBaseRenderer::ReorderDrawPoints()
+std::array<CPoint, 4> CRPBaseRenderer::ReorderDrawPoints(const CRect &destRect, const CRect &viewRect, unsigned int orientationDegCCW, float aspectRatio)
 {
-  const CRect &destRect = m_renderSettings.Geometry().Dimensions();
-  const unsigned int renderRotation = m_renderSettings.VideoSettings().GetRenderRotation();
+  std::array<CPoint, 4> rotatedDestCoords;
 
   // 0 - top left, 1 - top right, 2 - bottom right, 3 - bottom left
   float origMat[4][2] =
@@ -284,8 +282,7 @@ inline void CRPBaseRenderer::ReorderDrawPoints()
   bool changeAspect = false;
   int pointOffset = 0;
 
-  const unsigned int renderOrientation = (m_renderOrientation + renderRotation) % 360;
-  switch (renderOrientation)
+  switch (orientationDegCCW)
   {
   case 270:
     pointOffset = 1;
@@ -298,14 +295,6 @@ inline void CRPBaseRenderer::ReorderDrawPoints()
     pointOffset = 3;
     changeAspect = true;
     break;
-  }
-
-  // If renderer doesn't support rotation, treat orientation as 0 degree so
-  // that ffmpeg might handle it
-  if (!Supports(RENDERFEATURE::ROTATION))
-  {
-    pointOffset = 0;
-    changeAspect = false;
   }
 
   float diffX = 0.0f;
@@ -324,8 +313,6 @@ inline void CRPBaseRenderer::ReorderDrawPoints()
     // then the old, we need to scale down
     if (diffWidth > 0.0f || diffHeight > 0.0f)
     {
-      float aspectRatio = GetAspectRatio();
-
       // Scale to fit screen width because the difference in width is bigger
       // then the difference in height
       if (diffWidth > diffHeight)
@@ -343,8 +330,8 @@ inline void CRPBaseRenderer::ReorderDrawPoints()
     }
 
     // Calculate the center point of the view
-    centerX = m_viewRect.x1 + m_viewRect.Width() / 2.0f;
-    centerY = m_viewRect.y1 + m_viewRect.Height() / 2.0f;
+    centerX = viewRect.x1 + viewRect.Width() / 2.0f;
+    centerY = viewRect.y1 + viewRect.Height() / 2.0f;
 
     // Calculate the number of pixels we need to go in each x direction from
     // the center point
@@ -356,40 +343,44 @@ inline void CRPBaseRenderer::ReorderDrawPoints()
 
   for (int destIdx = 0, srcIdx = pointOffset; destIdx < 4; destIdx++)
   {
-    m_rotatedDestCoords[destIdx].x = origMat[srcIdx][0];
-    m_rotatedDestCoords[destIdx].y = origMat[srcIdx][1];
+    rotatedDestCoords[destIdx].x = origMat[srcIdx][0];
+    rotatedDestCoords[destIdx].y = origMat[srcIdx][1];
 
     if (changeAspect)
     {
       switch (srcIdx)
       {
       case 0:// top left
-        m_rotatedDestCoords[destIdx].x = centerX - diffX;
-        m_rotatedDestCoords[destIdx].y = centerY - diffY;
+        rotatedDestCoords[destIdx].x = centerX - diffX;
+        rotatedDestCoords[destIdx].y = centerY - diffY;
         break;
       case 1:// top right
-        m_rotatedDestCoords[destIdx].x = centerX + diffX;
-        m_rotatedDestCoords[destIdx].y = centerY - diffY;
+        rotatedDestCoords[destIdx].x = centerX + diffX;
+        rotatedDestCoords[destIdx].y = centerY - diffY;
         break;
       case 2:// bottom right
-        m_rotatedDestCoords[destIdx].x = centerX + diffX;
-        m_rotatedDestCoords[destIdx].y = centerY + diffY;
+        rotatedDestCoords[destIdx].x = centerX + diffX;
+        rotatedDestCoords[destIdx].y = centerY + diffY;
         break;
       case 3:// bottom left
-        m_rotatedDestCoords[destIdx].x = centerX - diffX;
-        m_rotatedDestCoords[destIdx].y = centerY + diffY;
+        rotatedDestCoords[destIdx].x = centerX - diffX;
+        rotatedDestCoords[destIdx].y = centerY + diffY;
         break;
       }
     }
     srcIdx++;
     srcIdx = srcIdx % 4;
   }
+
+  return rotatedDestCoords;
 }
 
-void CRPBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float width, float height, float inputFrameRatio, float zoomAmount)
+void CRPBaseRenderer::CalcNormalRenderRect(const CRect &viewRect, float inputFrameRatio, float zoomAmount, float pixelRatio, CRect &sourceRect, CRect &destRect)
 {
-  CRect &sourceRect = m_sourceRect;
-  CRect &destRect = m_renderSettings.Geometry().Dimensions();
+  const float offsetX = viewRect.x1;
+  const float offsetY = viewRect.y1;
+  const float width = viewRect.Width();
+  const float height = viewRect.Height();
 
   // If view window is empty, set empty destination
   if (height == 0 || width == 0)
@@ -402,7 +393,7 @@ void CRPBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float w
   // with black bars)
   // Calculate the correct output frame ratio (using the users pixel ratio
   // setting and the output pixel ratio setting)
-  float outputFrameRatio = inputFrameRatio / m_context.GetResInfo().fPixelRatio;
+  float outputFrameRatio = inputFrameRatio / pixelRatio;
 
   // Allow a certain error to maximize size of render area
   float fCorrection = width / height / outputFrameRatio - 1.0f;
@@ -444,49 +435,61 @@ void CRPBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float w
   destRect.x2 = destRect.x1 + MathUtils::round_int(newWidth);
   destRect.y1 = static_cast<float>(MathUtils::round_int(posY + offsetY));
   destRect.y2 = destRect.y1 + MathUtils::round_int(newHeight);
-
-  // Clip as needed
-  if (!(m_context.IsFullScreenVideo() || m_context.IsCalibrating()))
-  {
-    CRect original(destRect);
-    destRect.Intersect(CRect(offsetX, offsetY, offsetX + width, offsetY + height));
-    if (destRect != original)
-    {
-      float scaleX = sourceRect.Width() / original.Width();
-      float scaleY = sourceRect.Height() / original.Height();
-      sourceRect.x1 += (destRect.x1 - original.x1) * scaleX;
-      sourceRect.y1 += (destRect.y1 - original.y1) * scaleY;
-      sourceRect.x2 += (destRect.x2 - original.x2) * scaleX;
-      sourceRect.y2 += (destRect.y2 - original.y2) * scaleY;
-    }
-  }
-
-  UpdateDrawPoints(destRect);
-}
-
-void CRPBaseRenderer::UpdateDrawPoints(const CRect &destRect)
-{
-  if (m_oldDestRect != destRect || m_oldRenderOrientation != m_renderOrientation)
-  {
-    // Adapt the drawing rect points if we have to rotate and either destrect
-    // or orientation changed
-    ReorderDrawPoints();
-    m_oldDestRect = destRect;
-    m_oldRenderOrientation = m_renderOrientation;
-  }
 }
 
 void CRPBaseRenderer::ManageRenderArea()
 {
-  m_viewRect = m_context.GetViewWindow();
+  // Entire target rendering area for the video (including black bars)
+  CRect viewRect = m_context.GetViewWindow();
+
+  VIEWMODE viewMode = m_renderSettings.VideoSettings().GetRenderViewMode();
+  m_renderOrientation = m_renderSettings.VideoSettings().GetRenderRotation();
 
   m_sourceRect.x1 = 0.0f;
   m_sourceRect.y1 = 0.0f;
   m_sourceRect.x2 = static_cast<float>(m_sourceWidth);
   m_sourceRect.y2 = static_cast<float>(m_sourceHeight);
 
-  CalcNormalRenderRect(m_viewRect.x1, m_viewRect.y1, m_viewRect.Width(), m_viewRect.Height(), GetAspectRatio() * m_pixelRatio, m_zoomAmount);
-  CalculateViewMode();
+  CalcNormalRenderRect(viewRect, GetAspectRatio() * m_pixelRatio, m_zoomAmount, m_context.GetResInfo().fPixelRatio, m_sourceRect, m_renderSettings.Geometry().Dimensions());
+
+  // Clip as needed
+  if (!(m_context.IsFullScreenVideo() || m_context.IsCalibrating()))
+    ClipRect(viewRect, m_sourceRect, m_renderSettings.Geometry().Dimensions());
+
+  const CRect &destRect = m_renderSettings.Geometry().Dimensions();
+  if (m_oldDestRect != destRect || m_oldRenderOrientation != m_renderOrientation)
+  {
+    // Adapt the drawing rect points if we have to rotate and either destrect
+    // or orientation changed
+    m_rotatedDestCoords = ReorderDrawPoints(destRect, viewRect, m_renderOrientation, GetAspectRatio());
+    m_oldDestRect = destRect;
+    m_oldRenderOrientation = m_renderOrientation;
+  }
+
+  float screenWidth;
+  float screenHeight;
+  GetScreenDimensions(screenWidth, screenHeight);
+  CalculateViewMode(viewMode, m_sourceWidth, m_sourceHeight, screenWidth, screenHeight, m_pixelRatio, m_zoomAmount);
+}
+
+void CRPBaseRenderer::ClipRect(const CRect &viewRect, CRect &sourceRect, CRect &destRect)
+{
+  const float offsetX = viewRect.x1;
+  const float offsetY = viewRect.y1;
+  const float width = viewRect.Width();
+  const float height = viewRect.Height();
+
+  CRect original(destRect);
+  destRect.Intersect(CRect(offsetX, offsetY, offsetX + width, offsetY + height));
+  if (destRect != original)
+  {
+    float scaleX = sourceRect.Width() / original.Width();
+    float scaleY = sourceRect.Height() / original.Height();
+    sourceRect.x1 += (destRect.x1 - original.x1) * scaleX;
+    sourceRect.y1 += (destRect.y1 - original.y1) * scaleY;
+    sourceRect.x2 += (destRect.x2 - original.x2) * scaleX;
+    sourceRect.y2 += (destRect.y2 - original.y2) * scaleY;
+  }
 }
 
 void CRPBaseRenderer::MarkDirty()
@@ -494,7 +497,7 @@ void CRPBaseRenderer::MarkDirty()
   //CServiceBroker::GetGUI()->GetWindowManager().MarkDirty(m_renderSettings.Geometry().Dimensions()); //! @todo
 }
 
-float CRPBaseRenderer::GetAllowedErrorInAspect() const
+float CRPBaseRenderer::GetAllowedErrorInAspect()
 {
   return CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_ERRORINASPECT) * 0.01f;
 }
