@@ -171,7 +171,6 @@ void CRPBaseRenderer::CalculateViewMode()
   float &zoomAmount = m_zoomAmount;
 
   // Get our calibrated full screen resolution
-  RESOLUTION res = m_context.GetVideoResolution();
   RESOLUTION_INFO info = m_context.GetResInfo();
 
   float screenWidth = static_cast<float>(info.Overscan.right - info.Overscan.left);
@@ -194,17 +193,8 @@ void CRPBaseRenderer::CalculateViewMode()
     // Stretch image to 4:3 ratio
     zoomAmount = 1.0f;
 
-    if (res == RES_PAL_4x3 || res == RES_PAL60_4x3 || res == RES_NTSC_4x3 || res == RES_HDTV_480p_4x3)
-    {
-      // Stretch to the limits of the 4:3 screen
-      // Incorrect behaviour, but it's what the users want, so...
-      pixelRatio = (screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio;
-    }
-    else
-    {
-      // Now we need to set pixelRatio so that fOutputFrameRatio = 4:3
-      pixelRatio = (4.0f / 3.0f) / sourceFrameRatio;
-    }
+    // Now we need to set pixelRatio so that fOutputFrameRatio = 4:3
+    pixelRatio = (4.0f / 3.0f) / sourceFrameRatio;
 
     break;
   }
@@ -213,17 +203,8 @@ void CRPBaseRenderer::CalculateViewMode()
     // Stretch image to 16:9 ratio
     zoomAmount = 1.0f;
 
-    if (res == RES_PAL_4x3 || res == RES_PAL60_4x3 || res == RES_NTSC_4x3 || res == RES_HDTV_480p_4x3)
-    {
-      // Now we need to set pixelRatio so that outputFrameRatio = 16:9.
-      pixelRatio = (16.0f / 9.0f) / sourceFrameRatio;
-    }
-    else
-    {
-      // Stretch to the limits of the 16:9 screen
-      // Incorrect behaviour, but it's what the users want, so...
-      pixelRatio = (screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio;
-    }
+    // Stretch to the limits of the 16:9 screen
+    pixelRatio = (screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio;
 
     break;
   }
