@@ -224,7 +224,7 @@ void CRPBaseRenderer::CalculateViewMode(VIEWMODE viewMode, unsigned int sourceWi
 
     break;
   }
-  case VIEWMODE::Stretch16x9:
+  case VIEWMODE::Fullscreen:
   {
     // Stretch image to 16:9 ratio
     zoomAmount = 1.0f;

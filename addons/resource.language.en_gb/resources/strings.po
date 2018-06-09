@@ -17324,7 +17324,13 @@ msgctxt "#35227"
 msgid "Rotation"
 msgstr ""
 
-#empty strings from id 35228 to 35249
+#. Label of thumbnail in the in-game menu for stretching the video to fullscreen
+#: addons/skin.estuary/xml/Custom_1101_SettingsList.xml
+msgctxt "#35228"
+msgid "Fullscreen"
+msgstr ""
+
+#empty strings from id 35229 to 35249
 
 #: xbmc/windows/GUIMediaWindow.cpp
 msgctxt "#35250"
