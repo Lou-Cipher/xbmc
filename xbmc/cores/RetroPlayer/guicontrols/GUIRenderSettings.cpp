@@ -30,6 +30,11 @@ CGUIRenderSettings::CGUIRenderSettings(CGUIGameControl &guiControl) :
 {
 }
 
+bool CGUIRenderSettings::HasShaderPreset() const
+{
+  return m_guiControl.HasShaderPreset();
+}
+
 bool CGUIRenderSettings::HasScalingMethod() const
 {
   return m_guiControl.HasScalingMethod();
@@ -38,6 +43,11 @@ bool CGUIRenderSettings::HasScalingMethod() const
 bool CGUIRenderSettings::HasViewMode() const
 {
   return m_guiControl.HasViewMode();
+}
+
+bool CGUIRenderSettings::HasRotation() const
+{
+  return m_guiControl.HasRotation();
 }
 
 CRenderSettings CGUIRenderSettings::GetSettings() const
@@ -68,16 +78,30 @@ void CGUIRenderSettings::SetGeometry(CRenderGeometry geometry)
   m_renderSettings.Geometry() = std::move(geometry);
 }
 
-void CGUIRenderSettings::SetScalingMethod(ESCALINGMETHOD scalingMethod)
+void CGUIRenderSettings::SetShaderPreset(const std::string &shaderPreset)
+{
+  CSingleLock lock(m_mutex);
+
+  m_renderSettings.VideoSettings().SetShaderPreset(shaderPreset);
+}
+
+void CGUIRenderSettings::SetScalingMethod(SCALINGMETHOD scalingMethod)
 {
   CSingleLock lock(m_mutex);
 
   m_renderSettings.VideoSettings().SetScalingMethod(scalingMethod);
 }
 
-void CGUIRenderSettings::SetViewMode(ViewMode viewMode)
+void CGUIRenderSettings::SetViewMode(VIEWMODE viewMode)
 {
   CSingleLock lock(m_mutex);
 
   m_renderSettings.VideoSettings().SetRenderViewMode(viewMode);
+}
+
+void CGUIRenderSettings::SetRotationDegCCW(unsigned int rotationDegCCW)
+{
+  CSingleLock lock(m_mutex);
+
+  m_renderSettings.VideoSettings().SetRenderRotation(rotationDegCCW);
 }

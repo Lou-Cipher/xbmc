@@ -19,18 +19,25 @@
  */
 #pragma once
 
-#include "cores/IPlayer.h"
 #include "cores/RetroPlayer/rendering/RenderSettings.h"
+#include "cores/GameSettings.h"
 #include "utils/Geometry.h"
 
+extern "C" {
 #include "libavutil/pixfmt.h"
+}
 
-#include <atomic>
+#include <array>
 #include <memory>
 #include <stdint.h>
 
 namespace KODI
 {
+namespace SHADER
+{
+  class IVideoShaderPreset;
+}
+
 namespace RETRO
 {
   class CRenderContext;
@@ -57,11 +64,13 @@ namespace RETRO
     void PreRender(bool clear);
     void SetBuffer(IRenderBuffer *buffer);
     void RenderFrame(bool clear, uint8_t alpha);
+    void SetSpeed(double speed);
 
     // Feature support
-    virtual bool Supports(ERENDERFEATURE feature) const = 0;
+    virtual bool Supports(RENDERFEATURE feature) const = 0;
+    virtual bool Supports(SCALINGMETHOD method) const = 0;
     bool IsCompatible(const CRenderVideoSettings &settings) const;
-    virtual ESCALINGMETHOD GetDefaultScalingMethod() const = 0;
+    virtual SCALINGMETHOD GetDefaultScalingMethod() const = 0;
 
     // Public renderer interface
     virtual void Flush();
@@ -71,8 +80,11 @@ namespace RETRO
     const CRenderSettings &GetRenderSettings() const { return m_renderSettings; }
 
     // Set render settings
-    void SetScalingMethod(ESCALINGMETHOD method);
-    void SetViewMode(ViewMode viewMode);
+    void SetShaderPreset(const std::string &presetPath);
+
+    void SetScalingMethod(SCALINGMETHOD method);
+    void SetViewMode(VIEWMODE viewMode);
+    void SetRenderRotation(unsigned int rotationDegCCW);
 
     bool IsVisible() const;
 
@@ -87,14 +99,6 @@ namespace RETRO
      */
     virtual void ManageRenderArea();
 
-    /*!
-     * \brief Get video rectangle and view window
-     *
-     * \param source is original size of the video
-     * \param dest is the target rendering area honoring aspect ratio of source
-     * \param view is the entire target rendering area for the video (including black bars)
-     */
-    void GetVideoRect(CRect &source, CRect &dest, CRect &view) const;
     float GetAspectRatio() const;
 
     // Construction parameters
@@ -106,7 +110,6 @@ namespace RETRO
     AVPixelFormat m_format = AV_PIX_FMT_NONE;
     unsigned int m_sourceWidth = 0;
     unsigned int m_sourceHeight = 0;
-    float m_sourceFrameRatio = 1.0f;
     unsigned int m_renderOrientation = 0; // Degrees counter-clockwise
 
     /*!
@@ -121,30 +124,35 @@ namespace RETRO
     CRenderSettings m_renderSettings;
     float m_pixelRatio = 1.0f;
     float m_zoomAmount = 1.0f;
-    bool m_bNonLinearStretch = false;
     IRenderBuffer *m_renderBuffer = nullptr;
 
     // Geometry properties
-    CPoint m_rotatedDestCoords[4];
+    std::array<CPoint, 4> m_rotatedDestCoords;
     CRect m_oldDestRect; // destrect of the previous frame
-    CRect m_sourceRect;
-    CRect m_viewRect;
+    CRect m_sourceRect; // original size of the video
+
+    // ====== Video Shader Members =====
+    void UpdateVideoShaders();
+    std::unique_ptr<SHADER::IVideoShaderPreset> m_shaderPreset;
+
+    bool m_shadersNeedUpdate;
+    bool m_bUseShaderPreset;
 
   private:
-    bool IsNonLinearStretch() const { return m_bNonLinearStretch; }
-
     /*!
      * \brief Performs whatever nessesary after a frame has been rendered
      */
     void PostRender();
 
-    void CalcNormalRenderRect(float offsetX, float offsetY, float width, float height, float inputFrameRatio, float zoomAmount);
-    void CalculateViewMode();
+    void GetScreenDimensions(float &screenWidth, float &screenHeight);
 
-    void UpdateDrawPoints(const CRect &destRect);
-    void ReorderDrawPoints();
+    static void CalcNormalRenderRect(const CRect &viewRect, float inputFrameRatio, float zoomAmount, float pixelRatio, CRect &sourceRect, CRect &destRect);
+    static void ClipRect(const CRect &viewRect, CRect &sourceRect, CRect &destRect);
+    static void CalculateViewMode(VIEWMODE viewMode, unsigned int sourceWidth, unsigned int sourceHeight, float screenWidth, float screenHeight, float &pixelRatio, float &zoomAmount);
+
+    static std::array<CPoint, 4> ReorderDrawPoints(const CRect &destRect, const CRect &viewRect, unsigned int orientationDegCCW, float aspectRatio);
     void MarkDirty();
-    float GetAllowedErrorInAspect() const;
+    static float GetAllowedErrorInAspect();
 
     uint64_t m_renderFrameCount = 0;
     uint64_t m_lastRender = 0;

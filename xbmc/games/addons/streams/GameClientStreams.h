@@ -19,36 +19,47 @@
  */
 #pragma once
 
-struct game_stream_properties;
+#include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
+#include "cores/RetroPlayer/streams/RetroPlayerStreamTypes.h"
+
+#include <map>
 
 namespace KODI
 {
+namespace RETRO
+{
+  class IStreamManager;
+}
+
 namespace GAME
 {
 
 class CGameClient;
-class IGameAudioCallback;
 class IGameClientStream;
-class IGameVideoCallback;
 
 class CGameClientStreams
 {
 public:
   CGameClientStreams(CGameClient &gameClient);
 
-  void Initialize(IGameAudioCallback *audio, IGameVideoCallback *video);
+  void Initialize(RETRO::IStreamManager& streamManager);
   void Deinitialize();
 
-  IGameClientStream *OpenStream(const game_stream_properties &properties);
-  void CloseStream(IGameClientStream *stream);
+  IGameClientStream* OpenStream(const game_stream_properties &properties);
+  void CloseStream(IGameClientStream* stream);
 
 private:
+  // Utility functions
+  std::unique_ptr<IGameClientStream> CreateStream(GAME_STREAM_TYPE streamType) const;
+
   // Construction parameters
-  CGameClient &m_gameClient;
+  CGameClient& m_gameClient;
 
   // Initialization parameters
-  IGameAudioCallback* m_audio = nullptr;
-  IGameVideoCallback* m_video = nullptr;
+  RETRO::IStreamManager* m_streamManager = nullptr;
+
+  // Stream parameters
+  std::map<IGameClientStream*, RETRO::StreamPtr> m_streams;
 };
 
 } // namespace GAME

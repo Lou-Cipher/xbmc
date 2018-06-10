@@ -19,12 +19,17 @@
  */
 #pragma once
 
-#include "cores/IPlayer.h"
+#include "cores/GameSettings.h"
+
+#include <string>
 
 namespace KODI
 {
 namespace RETRO
 {
+  /*!
+   * \brief Video settings provided by the rendering system
+   */
   class CRenderVideoSettings
   {
   public:
@@ -37,15 +42,23 @@ namespace RETRO
     bool operator<(const CRenderVideoSettings &rhs) const;
     bool operator>(const CRenderVideoSettings &rhs) const { return !(*this == rhs || *this < rhs); }
 
-    ESCALINGMETHOD GetScalingMethod() const { return m_scalingMethod; }
-    void SetScalingMethod(ESCALINGMETHOD method) { m_scalingMethod = method; }
+    const std::string &GetShaderPreset() const { return m_shaderPreset; }
+    void SetShaderPreset(const std::string &shaderPreset) { m_shaderPreset = shaderPreset; }
 
-    ViewMode GetRenderViewMode() const { return m_viewMode; }
-    void SetRenderViewMode(ViewMode mode) { m_viewMode = mode; }
+    SCALINGMETHOD GetScalingMethod() const { return m_scalingMethod; }
+    void SetScalingMethod(SCALINGMETHOD method) { m_scalingMethod = method; }
+
+    VIEWMODE GetRenderViewMode() const { return m_viewMode; }
+    void SetRenderViewMode(VIEWMODE mode) { m_viewMode = mode; }
+
+    unsigned int GetRenderRotation() const { return m_rotationDegCCW; }
+    void SetRenderRotation(unsigned int rotationDegCCW) { m_rotationDegCCW = rotationDegCCW; }
 
   private:
-    ESCALINGMETHOD m_scalingMethod;
-    ViewMode m_viewMode;
+    std::string m_shaderPreset;
+    SCALINGMETHOD m_scalingMethod;
+    VIEWMODE m_viewMode;
+    unsigned int m_rotationDegCCW;
   };
 }
 }

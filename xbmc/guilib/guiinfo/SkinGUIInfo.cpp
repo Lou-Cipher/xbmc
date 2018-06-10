@@ -106,12 +106,14 @@ bool CSkinGUIInfo::GetBool(bool& value, const CGUIListItem *gitem, int contextWi
       value = CSkinSettings::GetInstance().GetBool(info.GetData1());
       return true;
     }
+    case SKIN_STRING_IS_EQUAL:
+    {
+      value = StringUtils::EqualsNoCase(CSkinSettings::GetInstance().GetString(info.GetData1()), info.GetData3());
+      return true;
+    }
     case SKIN_STRING:
     {
-      if (!info.GetData3().empty())
-        value = StringUtils::EqualsNoCase(CSkinSettings::GetInstance().GetString(info.GetData1()), info.GetData3());
-      else
-        value = !CSkinSettings::GetInstance().GetString(info.GetData1()).empty();
+      value = !CSkinSettings::GetInstance().GetString(info.GetData1()).empty();
       return true;
     }
     case SKIN_HAS_THEME:

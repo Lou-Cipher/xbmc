@@ -133,6 +133,7 @@ namespace DX
     void SetWindow(const winrt::Windows::UI::Core::CoreWindow& window);
     void SetWindowPos(winrt::Windows::Foundation::Rect rect);
 #endif // TARGET_WINDOWS_STORE
+    bool DoesTextureSharingWork();
 
   private:
     class CBackBuffer : public CD3DTexture
@@ -151,6 +152,7 @@ namespace DX
     void OnDeviceLost(bool removed);
     void OnDeviceRestored();
     void HandleOutputChange(const std::function<bool(DXGI_OUTPUT_DESC)>& cmpFunc);
+    bool CreateFactory();
 
     HWND m_window{ nullptr };
 #if defined(TARGET_WINDOWS_STORE)

@@ -87,7 +87,7 @@ namespace RETRO
 
     // Functions called from game loop
     bool Configure(AVPixelFormat format, unsigned int nominalWidth, unsigned int nominalHeight, unsigned int maxWidth, unsigned int maxHeight);
-    void AddFrame(const uint8_t* data, unsigned int size, unsigned int width, unsigned int height, unsigned int orientationDegCW);
+    void AddFrame(const uint8_t* data, size_t size, unsigned int width, unsigned int height, unsigned int orientationDegCW);
 
     // Functions called from the player
     void SetSpeed(double speed);
@@ -103,8 +103,8 @@ namespace RETRO
     void ClearBackground() override;
 
     // Implementation of IRenderCallback
-    bool SupportsRenderFeature(ERENDERFEATURE feature) const override;
-    bool SupportsScalingMethod(ESCALINGMETHOD method) const override;
+    bool SupportsRenderFeature(RENDERFEATURE feature) const override;
+    bool SupportsScalingMethod(SCALINGMETHOD method) const override;
 
   private:
     /*!
@@ -173,6 +173,7 @@ namespace RETRO
     std::vector<uint8_t> m_cachedFrame;
     std::map<AVPixelFormat, SwsContext*> m_scalers;
     bool m_bHasCachedFrame = false;
+    std::set<std::string> m_failedShaderPresets;
     bool m_bTriggerUpdateResolution = false;
     CCriticalSection m_stateMutex;
     CCriticalSection m_bufferMutex;

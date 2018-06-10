@@ -114,6 +114,7 @@ const CWindowTranslator::WindowMapByName CWindowTranslator::WindowMappingByName 
     { "smartplaylisteditor"      , WINDOW_DIALOG_SMART_PLAYLIST_EDITOR },
     { "smartplaylistrule"        , WINDOW_DIALOG_SMART_PLAYLIST_RULE },
     { "busydialog"               , WINDOW_DIALOG_BUSY },
+    { "busydialognocancel"       , WINDOW_DIALOG_BUSY_NOCANCEL },
     { "pictureinfo"              , WINDOW_DIALOG_PICTURE_INFO },
     { "accesspoints"             , WINDOW_DIALOG_ACCESS_POINTS },
     { "fullscreeninfo"           , WINDOW_DIALOG_FULLSCREEN_INFO },
@@ -158,6 +159,8 @@ const CWindowTranslator::WindowMapByName CWindowTranslator::WindowMappingByName 
     { "gamevideofilter"          , WINDOW_DIALOG_GAME_VIDEO_FILTER },
     { "gameviewmode"             , WINDOW_DIALOG_GAME_VIEW_MODE },
     { "gamevolume"               , WINDOW_DIALOG_GAME_VOLUME },
+    { "gameadvancedsettings"     , WINDOW_DIALOG_GAME_ADVANCED_SETTINGS },
+    { "gamevideorotation"        , WINDOW_DIALOG_GAME_VIDEO_ROTATION },
 };
 
 namespace

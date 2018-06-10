@@ -20,7 +20,7 @@
 
 #include "RPProcessInfo.h"
 #include "ServiceBroker.h"
-#include "cores/RetroPlayer/process/RenderBufferManager.h"
+#include "cores/RetroPlayer/buffers/RenderBufferManager.h"
 #include "cores/RetroPlayer/rendering/RenderContext.h"
 #include "cores/DataCacheCore.h"
 #include "windowing/GraphicContext.h"
@@ -176,16 +176,16 @@ void CRPProcessInfo::ResetInfo()
   }
 }
 
-bool CRPProcessInfo::HasScalingMethod(ESCALINGMETHOD scalingMethod) const
+bool CRPProcessInfo::HasScalingMethod(SCALINGMETHOD scalingMethod) const
 {
   return m_renderBufferManager->HasScalingMethod(scalingMethod);
 }
 
-std::vector<ESCALINGMETHOD> CRPProcessInfo::GetScalingMethods()
+std::vector<SCALINGMETHOD> CRPProcessInfo::GetScalingMethods()
 {
   return {
-    VS_SCALINGMETHOD_NEAREST,
-    VS_SCALINGMETHOD_LINEAR,
+    SCALINGMETHOD::NEAREST,
+    SCALINGMETHOD::LINEAR,
   };
 }
 

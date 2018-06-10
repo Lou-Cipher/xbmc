@@ -20,36 +20,38 @@
 #pragma once
 
 #include "IGameClientStream.h"
-#include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
+
+struct game_stream_video_properties;
 
 namespace KODI
 {
+namespace RETRO
+{
+  class IRetroPlayerStream;
+  struct VideoStreamProperties;
+}
+
 namespace GAME
 {
-
-class IGameVideoCallback;
 
 class CGameClientStreamVideo : public IGameClientStream
 {
 public:
-  CGameClientStreamVideo(IGameVideoCallback *video, const game_stream_video_properties &properties);
-  ~CGameClientStreamVideo() override { Close(); }
+  CGameClientStreamVideo() = default;
+  ~CGameClientStreamVideo() override = default;
 
   // Implementation of IGameClientStream
-  GAME_STREAM_TYPE Type() const override { return GAME_STREAM_VIDEO; }
-  bool Open() override;
-  void Close() override;
-  void AddData(const game_stream_packet &packet) override;
+  bool OpenStream(RETRO::IRetroPlayerStream* stream,
+                  const game_stream_properties& properties) override;
+  void CloseStream() override;
+  void AddData(const game_stream_packet& packet) override;
 
 private:
-  // Construction parameters
-  IGameVideoCallback *const m_video;
-  const GAME_PIXEL_FORMAT m_format;
-  const unsigned int m_nominalWidth;
-  const unsigned int m_nominalHeight;
-  const unsigned int m_maxWidth;
-  const unsigned int m_maxHeight;
-  const float m_aspectRatio;
+  // Utility functions
+  static RETRO::VideoStreamProperties* TranslateProperties(const game_stream_video_properties &properties);
+
+  // Stream parameters
+  RETRO::IRetroPlayerStream* m_stream;
 };
 
 } // namespace GAME

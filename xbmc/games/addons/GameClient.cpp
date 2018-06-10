@@ -233,17 +233,16 @@ void CGameClient::Unload()
   Destroy();
 }
 
-bool CGameClient::OpenFile(const CFileItem& file, IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input)
+bool CGameClient::OpenFile(const CFileItem& file, RETRO::IStreamManager& streamManager, IGameInputCallback *input)
 {
-  if (audio == nullptr || video == nullptr)
-    return false;
+  const std::string filePath = file.GetDynPath();
 
   // Check if we should open in standalone mode
-  if (file.GetPath().empty())
+  if (filePath.empty())
     return false;
 
   // Some cores "succeed" to load the file even if it doesn't exist
-  if (!XFILE::CFile::Exists(file.GetPath()))
+  if (!XFILE::CFile::Exists(filePath))
   {
 
     // Failed to play game
@@ -253,7 +252,7 @@ bool CGameClient::OpenFile(const CFileItem& file, IGameAudioCallback* audio, IGa
   }
 
   // Resolve special:// URLs
-  CURL translatedUrl(CSpecialProtocol::TranslatePath(file.GetPath()));
+  CURL translatedUrl(CSpecialProtocol::TranslatePath(filePath));
 
   // Remove file:// from URLs if add-on doesn't support VFS
   if (!m_bSupportsVFS)
@@ -283,13 +282,13 @@ bool CGameClient::OpenFile(const CFileItem& file, IGameAudioCallback* audio, IGa
     return false;
   }
 
-  if (!InitializeGameplay(file.GetPath(), audio, video, input))
+  if (!InitializeGameplay(filePath, streamManager, input))
     return false;
 
   return true;
 }
 
-bool CGameClient::OpenStandalone(IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input)
+bool CGameClient::OpenStandalone(RETRO::IStreamManager& streamManager, IGameInputCallback *input)
 {
   CLog::Log(LOGDEBUG, "GameClient: Loading %s in standalone mode", ID().c_str());
 
@@ -311,17 +310,17 @@ bool CGameClient::OpenStandalone(IGameAudioCallback* audio, IGameVideoCallback* 
     return false;
   }
 
-  if (!InitializeGameplay(ID(), audio, video, input))
+  if (!InitializeGameplay("", streamManager, input))
     return false;
 
   return true;
 }
 
-bool CGameClient::InitializeGameplay(const std::string& gamePath, IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input)
+bool CGameClient::InitializeGameplay(const std::string& gamePath, RETRO::IStreamManager& streamManager, IGameInputCallback *input)
 {
   if (LoadGameInfo())
   {
-    Streams().Initialize(audio, video);
+    Streams().Initialize(streamManager);
 
     m_bIsPlaying      = true;
     m_gamePath        = gamePath;
@@ -361,9 +360,9 @@ bool CGameClient::LoadGameInfo()
   catch (...) { LogException("GetRegion()"); return false; }
 
   CLog::Log(LOGINFO, "GAME: ---------------------------------------");
-  CLog::Log(LOGINFO, "GAME: FPS:            %f", timingInfo.fps);
-  CLog::Log(LOGINFO, "GAME: Sample Rate:    %f", timingInfo.sample_rate);
-  CLog::Log(LOGINFO, "GAME: Region:         %s", CGameClientTranslator::TranslateRegion(region));
+  CLog::Log(LOGINFO, "GAME: FPS:         %f", timingInfo.fps);
+  CLog::Log(LOGINFO, "GAME: Sample Rate: %f", timingInfo.sample_rate);
+  CLog::Log(LOGINFO, "GAME: Region:      %s", CGameClientTranslator::TranslateRegion(region));
   CLog::Log(LOGINFO, "GAME: ---------------------------------------");
 
   m_framerate = timingInfo.fps;

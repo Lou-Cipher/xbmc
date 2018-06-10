@@ -20,8 +20,10 @@
 #pragma once
 
 #include "DialogGameVideoSelect.h"
-#include "cores/IPlayer.h"
+#include "cores/GameSettings.h"
 #include "FileItem.h"
+
+class TiXmlNode;
 
 namespace KODI
 {
@@ -44,8 +46,20 @@ namespace GAME
 
   private:
     void InitScalingMethods();
+    void InitVideoFilters();
 
-    static void GetProperties(const CFileItem &item, ESCALINGMETHOD &scalingMethod, std::string &description);
+    static bool IsCompatible(const TiXmlNode* presetNode);
+
+    static std::string GetLocalizedString(uint32_t code);
+    static void GetProperties(const CFileItem &item, std::string &videoPreset, RETRO::SCALINGMETHOD &scalingMethod, std::string &description);
+
+    struct VideoFilterProperties
+    {
+      std::string path;
+      int nameIndex;
+      int categoryIndex;
+      int descriptionIndex;
+    };
 
     CFileItemList m_items;
 

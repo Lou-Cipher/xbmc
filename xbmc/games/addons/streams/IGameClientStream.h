@@ -19,10 +19,17 @@
  */
 #pragma once
 
-#include "addons/kodi-addon-dev-kit/include/kodi/kodi_game_types.h"
+struct game_stream_buffer;
+struct game_stream_packet;
+struct game_stream_properties;
 
 namespace KODI
 {
+namespace RETRO
+{
+  class IRetroPlayerStream;
+}
+
 namespace GAME
 {
 
@@ -32,21 +39,19 @@ public:
   virtual ~IGameClientStream() = default;
 
   /*!
-   * \brief Get the stream type
-   */
-  virtual GAME_STREAM_TYPE Type() const = 0;
-
-  /*!
    * \brief Open the stream
+   *
+   * \param stream The RetroPlayer resource to take ownership of
    *
    * \return True if the stream was opened, false otherwise
    */
-  virtual bool Open() = 0;
+  virtual bool OpenStream(RETRO::IRetroPlayerStream* stream,
+                          const game_stream_properties& properties) = 0;
 
   /*!
-   * \brief Close the stream
+   * \brief Release the RetroPlayer stream resource
    */
-  virtual void Close() = 0;
+  virtual void CloseStream() = 0;
 
   /*!
    * \brief Get a buffer for zero-copy stream data
@@ -59,21 +64,21 @@ public:
    *
    * \return True if buffer was set, false otherwise
    */
-  virtual bool GetBuffer(unsigned int width, unsigned int height, game_stream_buffer &buffer) { return false; }
+  virtual bool GetBuffer(unsigned int width, unsigned int height, game_stream_buffer& buffer) { return false; }
 
   /*!
    * \brief Free an allocated buffer
    *
    * \param buffer The buffer returned from GetStreamBuffer()
    */
-  virtual void ReleaseBuffer(game_stream_buffer &buffer) { }
+  virtual void ReleaseBuffer(game_stream_buffer& buffer) { }
 
   /*!
    * \brief Add a data packet to a stream
    *
    * \param packet The data packet
    */
-  virtual void AddData(const game_stream_packet &packet) = 0;
+  virtual void AddData(const game_stream_packet& packet) = 0;
 };
 
 } // namespace GAME

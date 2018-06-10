@@ -2081,8 +2081,7 @@ const infomap videoplayer[] =    {{ "title",            VIDEOPLAYER_TITLE },
 ///     The following values are possible:
 ///     - normal
 ///     - 4:3
-///     - 16:9
-///     - nonlinear
+///     - fullscreen
 ///     - original
 ///   }
 /// \table_end
@@ -6056,7 +6055,7 @@ int CGUIInfoManager::TranslateSingleString(const std::string &strCondition, bool
         if (prop.name == "string")
         {
           if (prop.num_params() == 2)
-            return AddMultiInfo(CGUIInfo(SKIN_STRING, CSkinSettings::GetInstance().TranslateString(prop.param(0)), prop.param(1)));
+            return AddMultiInfo(CGUIInfo(SKIN_STRING_IS_EQUAL, CSkinSettings::GetInstance().TranslateString(prop.param(0)), prop.param(1)));
           else
             return AddMultiInfo(CGUIInfo(SKIN_STRING, CSkinSettings::GetInstance().TranslateString(prop.param(0))));
         }
@@ -6248,6 +6247,7 @@ int CGUIInfoManager::TranslateListItem(const Property& cat, const Property& prop
     }
     else if (prop.name == "property" ||
              prop.name == "art" ||
+             prop.name == "rating" ||
              prop.name == "votes" ||
              prop.name == "ratingandvotes")
     {

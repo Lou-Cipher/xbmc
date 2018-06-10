@@ -21,7 +21,6 @@
 
 #include "RenderGeometry.h"
 #include "RenderVideoSettings.h"
-#include "cores/IPlayer.h"
 
 namespace KODI
 {

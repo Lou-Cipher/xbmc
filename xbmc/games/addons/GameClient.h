@@ -35,16 +35,19 @@ class CFileItem;
 
 namespace KODI
 {
+namespace RETRO
+{
+  class IStreamManager;
+}
+
 namespace GAME
 {
 
 class CGameClientInGameSaves;
 class CGameClientInput;
 class CGameClientProperties;
-class IGameAudioCallback;
 class IGameClientPlayback;
 class IGameInputCallback;
-class IGameVideoCallback;
 
 /*!
  * \ingroup games
@@ -84,8 +87,8 @@ public:
   // Start/stop gameplay
   bool Initialize(void);
   void Unload();
-  bool OpenFile(const CFileItem& file, IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input);
-  bool OpenStandalone(IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input);
+  bool OpenFile(const CFileItem& file, RETRO::IStreamManager& streamManager, IGameInputCallback *input);
+  bool OpenStandalone(RETRO::IStreamManager& streamManager, IGameInputCallback *input);
   void Reset();
   void CloseFile();
   const std::string& GetGamePath() const { return m_gamePath; }
@@ -115,7 +118,7 @@ public:
 
 private:
   // Private gameplay functions
-  bool InitializeGameplay(const std::string& gamePath, IGameAudioCallback* audio, IGameVideoCallback* video, IGameInputCallback *input);
+  bool InitializeGameplay(const std::string& gamePath, RETRO::IStreamManager& streamManager, IGameInputCallback *input);
   bool LoadGameInfo();
   void NotifyError(GAME_ERROR error);
   std::string GetMissingResource();

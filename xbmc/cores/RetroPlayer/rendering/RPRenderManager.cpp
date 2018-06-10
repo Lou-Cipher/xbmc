@@ -22,12 +22,12 @@
 #include "RenderContext.h"
 #include "RenderSettings.h"
 #include "RenderTranslator.h"
+#include "cores/RetroPlayer/buffers/IRenderBuffer.h"
+#include "cores/RetroPlayer/buffers/IRenderBufferPool.h"
+#include "cores/RetroPlayer/buffers/RenderBufferManager.h"
 #include "cores/RetroPlayer/guibridge/GUIGameSettings.h"
 #include "cores/RetroPlayer/guibridge/GUIRenderTargetFactory.h"
 #include "cores/RetroPlayer/guibridge/IGUIRenderSettings.h"
-#include "cores/RetroPlayer/process/IRenderBuffer.h"
-#include "cores/RetroPlayer/process/IRenderBufferPool.h"
-#include "cores/RetroPlayer/process/RenderBufferManager.h"
 #include "cores/RetroPlayer/process/RPProcessInfo.h"
 #include "cores/RetroPlayer/rendering/VideoRenderers/RPBaseRenderer.h"
 #include "utils/TransformMatrix.h"
@@ -102,7 +102,7 @@ bool CRPRenderManager::Configure(AVPixelFormat format, unsigned int nominalWidth
   return true;
 }
 
-void CRPRenderManager::AddFrame(const uint8_t* data, unsigned int size, unsigned int width, unsigned int height, unsigned int orientationDegCCW)
+void CRPRenderManager::AddFrame(const uint8_t* data, size_t size, unsigned int width, unsigned int height, unsigned int orientationDegCCW)
 {
   // Validate parameters
   if (data == nullptr || size == 0 || width == 0 || height == 0)
@@ -161,6 +161,9 @@ void CRPRenderManager::AddFrame(const uint8_t* data, unsigned int size, unsigned
 void CRPRenderManager::SetSpeed(double speed)
 {
   m_speed = speed;
+
+  for (const auto &renderer : m_renderers)
+    renderer->SetSpeed(speed); //! @todo Retroactive set speed for newly created renderers
 }
 
 void CRPRenderManager::FrameMove()
@@ -262,7 +265,7 @@ void CRPRenderManager::ClearBackground()
   m_renderContext.Clear(0);
 }
 
-bool CRPRenderManager::SupportsRenderFeature(ERENDERFEATURE feature) const
+bool CRPRenderManager::SupportsRenderFeature(RENDERFEATURE feature) const
 {
   //! @todo Move to ProcessInfo
   for (const auto &renderer : m_renderers)
@@ -274,14 +277,20 @@ bool CRPRenderManager::SupportsRenderFeature(ERENDERFEATURE feature) const
   return false;
 }
 
-bool CRPRenderManager::SupportsScalingMethod(ESCALINGMETHOD method) const
+bool CRPRenderManager::SupportsScalingMethod(SCALINGMETHOD method) const
 {
   //! @todo Move to ProcessInfo
   for (IRenderBufferPool *bufferPool : m_processInfo.GetBufferManager().GetBufferPools())
   {
     CRenderVideoSettings renderSettings;
     renderSettings.SetScalingMethod(method);
-    if (bufferPool->IsCompatible(renderSettings))
+    bool hasAtLeastOneRenderer = !m_renderers.empty();
+    bool bufferPoolSupport = bufferPool->IsCompatible(renderSettings);
+    bool renderersSupport = std::all_of(m_renderers.begin(), m_renderers.end(),
+      [method](const std::shared_ptr<CRPBaseRenderer>& renderer) { return renderer->Supports(method); });
+
+    // If method is supported by the buffer pool and all the renderers, the manager supports it
+    if (hasAtLeastOneRenderer && bufferPoolSupport && renderersSupport)
       return true;
   }
 
@@ -347,6 +356,7 @@ std::shared_ptr<CRPBaseRenderer> CRPRenderManager::GetRenderer(const IGUIRenderS
   {
     renderer->SetScalingMethod(effectiveRenderSettings.VideoSettings().GetScalingMethod());
     renderer->SetViewMode(effectiveRenderSettings.VideoSettings().GetRenderViewMode());
+    renderer->SetRenderRotation(effectiveRenderSettings.VideoSettings().GetRenderRotation());
   }
 
   return renderer;
@@ -375,10 +385,14 @@ std::shared_ptr<CRPBaseRenderer> CRPRenderManager::GetRenderer(IRenderBufferPool
   // If buffer pool has no compatible renderers, create one now
   if (!renderer)
   {
+    const std::string &shaderPreset = renderSettings.VideoSettings().GetShaderPreset();
+
     CLog::Log(LOGERROR, "RetroPlayer[RENDER]: Creating renderer for %s",
               m_processInfo.GetRenderSystemName(bufferPool).c_str());
 
-    renderer.reset(m_processInfo.CreateRenderer(bufferPool, renderSettings));
+    // Try to create a renderer now, unless the shader preset has failed already
+    if (shaderPreset.empty() || m_failedShaderPresets.find(shaderPreset) == m_failedShaderPresets.end())
+      renderer.reset(m_processInfo.CreateRenderer(bufferPool, renderSettings));
     if (renderer && renderer->Configure(m_format, m_width, m_height))
     {
       // Ensure we have a render buffer for this renderer
@@ -388,6 +402,10 @@ std::shared_ptr<CRPBaseRenderer> CRPRenderManager::GetRenderer(IRenderBufferPool
     }
     else
       renderer.reset();
+
+    // If we failed to create a renderer, blacklist the shader preset
+    if (!renderer && !shaderPreset.empty())
+      m_failedShaderPresets.insert(shaderPreset);
   }
 
   return renderer;
@@ -487,8 +505,8 @@ void CRPRenderManager::CopyFrame(IRenderBuffer *renderBuffer, AVPixelFormat form
 
   if (target != nullptr)
   {
-    const unsigned int sourceStride = size / height;
-    const unsigned int targetStride = renderBuffer->GetFrameSize() / renderBuffer->GetHeight();
+    const unsigned int sourceStride = static_cast<unsigned int>(size / height);
+    const unsigned int targetStride = static_cast<unsigned int>(renderBuffer->GetFrameSize() / renderBuffer->GetHeight());
 
     if (m_format == renderBuffer->GetFormat())
     {
@@ -533,14 +551,23 @@ CRenderVideoSettings CRPRenderManager::GetEffectiveSettings(const IGUIRenderSett
 
   if (settings != nullptr)
   {
+    if (settings->HasShaderPreset())
+      effectiveSettings.SetShaderPreset(settings->GetSettings().VideoSettings().GetShaderPreset());
     if (settings->HasScalingMethod())
       effectiveSettings.SetScalingMethod(settings->GetSettings().VideoSettings().GetScalingMethod());
     if (settings->HasViewMode())
       effectiveSettings.SetRenderViewMode(settings->GetSettings().VideoSettings().GetRenderViewMode());
+    if (settings->HasRotation())
+      effectiveSettings.SetRenderRotation(settings->GetSettings().VideoSettings().GetRenderRotation());
   }
 
   // Sanitize settings
-  if (effectiveSettings.GetScalingMethod() == VS_SCALINGMETHOD_AUTO)
+  if (!effectiveSettings.GetShaderPreset().empty())
+    effectiveSettings.SetScalingMethod(SCALINGMETHOD::AUTO);
+
+  // If the method is AUTO or unsupported by the manager, we need to set it to the default
+  SCALINGMETHOD scalingMethod = effectiveSettings.GetScalingMethod();
+  if (scalingMethod == SCALINGMETHOD::AUTO || !SupportsScalingMethod(scalingMethod))
     effectiveSettings.SetScalingMethod(m_processInfo.GetDefaultScalingMethod());
 
   return effectiveSettings;

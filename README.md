@@ -22,11 +22,11 @@ Many of these features are still works-in-progress, so fork the code and help ou
 
 # Building Kodi and games
 
-Build Kodi per usual. If you are developing binary add-ons using a local prefix, specifying it during the `./configure` step:
+Build Kodi per usual. If you are developing binary add-ons using a local prefix, specifying it during the `cmake` step:
 
 ```
-./bootstrap
-./configure --prefix=$HOME/kodi
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$HOME/kodi
 make -j8
 ```
 

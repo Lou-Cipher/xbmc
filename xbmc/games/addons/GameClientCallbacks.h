@@ -19,39 +19,10 @@
  */
 #pragma once
 
-#include "cores/AudioEngine/Utils/AEChannelData.h"
-
-#include "libavcodec/avcodec.h"
-#include "libavutil/pixfmt.h"
-
-#include <stdint.h>
-
-class CAEChannelInfo;
-
 namespace KODI
 {
 namespace GAME
 {
-  class IGameAudioCallback
-  {
-  public:
-    virtual ~IGameAudioCallback() = default;
-
-    virtual bool OpenStream(AEDataFormat format, unsigned int samplerate, const CAEChannelInfo& channelLayout) = 0;
-    virtual void AddData(const uint8_t* data, unsigned int size) = 0;
-    virtual void CloseStream() = 0;
-  };
-
-  class IGameVideoCallback
-  {
-  public:
-    virtual ~IGameVideoCallback() = default;
-
-    virtual bool OpenStream(AVPixelFormat pixfmt, unsigned int nominalWidth, unsigned int nominalHeight, unsigned int maxWidth, unsigned int maxHeight, float aspectRatio) = 0;
-    virtual void AddData(const uint8_t* data, unsigned int size, unsigned int width, unsigned int height, unsigned int orientationDegCCW) = 0;
-    virtual void CloseStream() = 0;
-  };
-
   class IGameInputCallback
   {
   public:

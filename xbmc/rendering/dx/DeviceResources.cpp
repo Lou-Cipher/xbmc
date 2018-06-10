@@ -27,7 +27,14 @@
 #include "messaging/ApplicationMessenger.h"
 #include "platform/win32/CharsetConverter.h"
 #include "ServiceBroker.h"
+#include "settings/AdvancedSettings.h"
 #include "utils/log.h"
+#include "utils/SystemInfo.h"
+
+#ifdef _DEBUG
+#include <dxgidebug.h>
+#pragma comment(lib, "dxgi.lib")
+#endif // _DEBUG
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -294,6 +301,8 @@ void DX::DeviceResources::CreateDeviceResources()
 {
   CLog::LogF(LOGDEBUG, "creating DirectX 11 device.");
 
+  CreateFactory();
+
   UINT creationFlags = D3D11_CREATE_DEVICE_VIDEO_SUPPORT;
 #if defined(_DEBUG)
   if (DX::SdkLayersAvailable())
@@ -307,16 +316,16 @@ void DX::DeviceResources::CreateDeviceResources()
   // Note the ordering should be preserved.
   // Don't forget to declare your application's minimum required feature level in its
   // description.  All applications are assumed to support 9.1 unless otherwise stated.
-  D3D_FEATURE_LEVEL featureLevels[] =
-  {
-    D3D_FEATURE_LEVEL_11_1,
-    D3D_FEATURE_LEVEL_11_0,
-    D3D_FEATURE_LEVEL_10_1,
-    D3D_FEATURE_LEVEL_10_0,
-    D3D_FEATURE_LEVEL_9_3,
-    D3D_FEATURE_LEVEL_9_2,
-    D3D_FEATURE_LEVEL_9_1
-  };
+  std::vector<D3D_FEATURE_LEVEL> featureLevels;
+  if (CSysInfo::IsWindowsVersionAtLeast(CSysInfo::WindowsVersionWin8))
+    featureLevels.push_back(D3D_FEATURE_LEVEL_11_1);
+
+  featureLevels.push_back(D3D_FEATURE_LEVEL_11_0);
+  featureLevels.push_back(D3D_FEATURE_LEVEL_10_1);
+  featureLevels.push_back(D3D_FEATURE_LEVEL_10_0);
+  featureLevels.push_back(D3D_FEATURE_LEVEL_9_3);
+  featureLevels.push_back(D3D_FEATURE_LEVEL_9_2);
+  featureLevels.push_back(D3D_FEATURE_LEVEL_9_1);
 
   // Create the Direct3D 11 API device object and a corresponding context.
   ComPtr<ID3D11Device> device;
@@ -328,8 +337,8 @@ void DX::DeviceResources::CreateDeviceResources()
       drivertType,               // Create a device using scepcified driver.
       nullptr,                   // Should be 0 unless the driver is D3D_DRIVER_TYPE_SOFTWARE.
       creationFlags,             // Set debug and Direct2D compatibility flags.
-      featureLevels,             // List of feature levels this app can support.
-      ARRAYSIZE(featureLevels),  // Size of the list above.
+      featureLevels.data(),      // List of feature levels this app can support.
+      featureLevels.size(),      // Size of the list above.
       D3D11_SDK_VERSION,         // Always set this to D3D11_SDK_VERSION for Windows Store apps.
       &device,                   // Returns the Direct3D device created.
       &m_d3dFeatureLevel,        // Returns feature level of device created.
@@ -344,8 +353,8 @@ void DX::DeviceResources::CreateDeviceResources()
         D3D_DRIVER_TYPE_WARP, // Create a WARP device instead of a hardware device.
         nullptr,
         creationFlags,
-        featureLevels,
-        ARRAYSIZE(featureLevels),
+        featureLevels.data(),
+        featureLevels.size(),
         D3D11_SDK_VERSION,
         &device,
         &m_d3dFeatureLevel,
@@ -399,7 +408,6 @@ void DX::DeviceResources::CreateDeviceResources()
     hr = dxgiDevice->GetAdapter(&adapter); CHECK_ERR();
     hr = adapter.As(&m_adapter); CHECK_ERR();
   }
-  hr = m_adapter->GetParent(IID_PPV_ARGS(&m_dxgiFactory)); CHECK_ERR();
 
   DXGI_ADAPTER_DESC aDesc;
   m_adapter->GetDesc(&aDesc);
@@ -414,20 +422,23 @@ void DX::DeviceResources::ReleaseBackBuffer()
 {
   CLog::LogF(LOGDEBUG, "release buffers.");
 
-  // Clear the previous window size specific context.
-  ID3D11RenderTargetView* nullViews[] = { nullptr, nullptr, nullptr, nullptr };
-  m_deferrContext->OMSetRenderTargets(4, nullViews, nullptr);
-  FinishCommandList(false);
-
   m_backBufferTex.Release();
   m_d3dDepthStencilView = nullptr;
-  m_deferrContext->Flush();
-  m_d3dContext->Flush();
+  if (m_deferrContext) 
+  {
+    // Clear the previous window size specific context.
+    ID3D11RenderTargetView* nullViews[] = { nullptr, nullptr, nullptr, nullptr };
+    m_deferrContext->OMSetRenderTargets(4, nullViews, nullptr);
+    FinishCommandList(false);
+
+    m_deferrContext->Flush();
+    m_d3dContext->Flush();
+  }
 }
 
 void DX::DeviceResources::CreateBackBuffer()
 {
-  if (!m_bDeviceCreated)
+  if (!m_bDeviceCreated || !m_swapChain)
     return;
 
   CLog::LogF(LOGDEBUG, "create buffers.");
@@ -512,6 +523,7 @@ void DX::DeviceResources::ResizeBuffers()
 
   bool bHWStereoEnabled = RENDER_STEREO_MODE_HARDWAREBASED == CServiceBroker::GetWinSystem()->GetGfxContext().GetStereoMode();
   bool windowed = true;
+  HRESULT hr = E_FAIL;
 
   DXGI_SWAP_CHAIN_DESC1 scDesc = { 0 };
   if (m_swapChain)
@@ -539,7 +551,7 @@ void DX::DeviceResources::ResizeBuffers()
   {
     // If the swap chain already exists, resize it.
     m_swapChain->GetDesc1(&scDesc);
-    HRESULT hr = m_swapChain->ResizeBuffers(
+    hr = m_swapChain->ResizeBuffers(
       scDesc.BufferCount,
       lround(m_outputSize.Width),
       lround(m_outputSize.Height),
@@ -562,7 +574,6 @@ void DX::DeviceResources::ResizeBuffers()
   {
     // Otherwise, create a new one using the same adapter as the existing Direct3D device.
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-
     swapChainDesc.Width = lround(m_outputSize.Width);
     swapChainDesc.Height = lround(m_outputSize.Height);
     swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -580,7 +591,21 @@ void DX::DeviceResources::ResizeBuffers()
     scFSDesc.Windowed = windowed;
 
     ComPtr<IDXGISwapChain1> swapChain;
-    HRESULT hr = CreateSwapChain(swapChainDesc, scFSDesc, &swapChain);
+    if ( m_d3dFeatureLevel >= D3D_FEATURE_LEVEL_11_0 
+      && !bHWStereoEnabled 
+      && g_advancedSettings.m_bTry10bitOutput)
+    {
+      swapChainDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+      hr = CreateSwapChain(swapChainDesc, scFSDesc, &swapChain);
+      if (FAILED(hr))
+      {
+        CLog::LogF(LOGWARNING, "creating 10bit swapchain failed, fallback to 8bit.");
+        swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+      }
+    }
+
+    if (!swapChain)
+      hr = CreateSwapChain(swapChainDesc, scFSDesc, &swapChain);
 
     if (FAILED(hr) && bHWStereoEnabled)
     {
@@ -595,6 +620,12 @@ void DX::DeviceResources::ResizeBuffers()
 
       // fallback to split_horizontal mode.
       CServiceBroker::GetWinSystem()->GetGfxContext().SetStereoMode(RENDER_STEREO_MODE_SPLIT_HORIZONTAL);
+    }
+
+    if (FAILED(hr))
+    {
+      CLog::LogF(LOGERROR, "unable to create swapchain.");
+      return;
     }
 
     hr = swapChain.As(&m_swapChain); CHECK_ERR();
@@ -843,10 +874,9 @@ bool DX::DeviceResources::Begin()
 }
 
 // Present the contents of the swap chain to the screen.
-void DX::DeviceResources::Present() 
+void DX::DeviceResources::Present()
 {
   FinishCommandList();
-  m_d3dContext->Flush();
 
   // The first argument instructs DXGI to block until VSync, putting the application
   // to sleep until the next VSync. This ensures we don't waste any cycles rendering
@@ -867,6 +897,8 @@ void DX::DeviceResources::Present()
     {
       CreateWindowSizeDependentResources();
     }
+    if (!m_dxgiFactory->IsCurrent())
+      CreateFactory();
   }
 
   if (m_d3dContext == m_deferrContext)
@@ -928,6 +960,31 @@ void DX::DeviceResources::HandleOutputChange(const std::function<bool(DXGI_OUTPU
   }
 }
 
+bool DX::DeviceResources::CreateFactory()
+{
+  HRESULT hr;
+#if defined(_DEBUG) && defined(TARGET_WINDOWS_STORE)
+  bool debugDXGI = false;
+  {
+    ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+    {
+      debugDXGI = true;
+
+      hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())); RETURN_ERR(false);
+
+      dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+      dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+    }
+  }
+
+  if (!debugDXGI)
+#endif
+  hr = CreateDXGIFactory1(IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())); RETURN_ERR(false);
+
+  return true;
+}
+
 void DX::DeviceResources::SetMonitor(HMONITOR monitor)
 {
   HandleOutputChange([monitor](DXGI_OUTPUT_DESC outputDesc) { 
@@ -962,6 +1019,15 @@ bool DX::DeviceResources::IsStereoAvailable() const
     return m_dxgiFactory->IsWindowedStereoEnabled();
 
   return false;
+}
+
+bool DX::DeviceResources::DoesTextureSharingWork()
+{
+  if (m_d3dFeatureLevel < D3D_FEATURE_LEVEL_10_0)
+    return false;
+
+  // @todo proper check in run-time
+  return g_advancedSettings.m_allowUseSeparateDeviceForDecoding;
 }
 
 #if defined(TARGET_WINDOWS_DESKTOP)

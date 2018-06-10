@@ -318,6 +318,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     float m_sleepBeforeFlip; ///< if greater than zero, XBMC waits for raster to be this amount through the frame prior to calling the flip
     bool m_bVirtualShares;
     bool m_bAllowDeferredRendering;
+    bool m_bTry10bitOutput;
 
     std::string m_cpuTempCmd;
     std::string m_gpuTempCmd;
@@ -377,6 +378,7 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     std::string m_stereoscopicregex_tab;
 
     bool m_useDisplayControlHWStereo;
+    bool m_allowUseSeparateDeviceForDecoding;
 
     /*!< @brief position behavior of ass subtitles when setting "subtitle position on screen" set to "fixed"
     True to show at the fixed position set in video calibration

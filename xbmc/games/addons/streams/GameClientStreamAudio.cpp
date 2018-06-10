@@ -19,69 +19,41 @@
  */
 
 #include "GameClientStreamAudio.h"
-#include "cores/AudioEngine/Utils/AEChannelData.h"
-#include "cores/AudioEngine/Utils/AEChannelInfo.h"
-#include "games/addons/GameClientCallbacks.h"
+#include "cores/RetroPlayer/streams/RetroPlayerAudio.h"
 #include "games/addons/GameClientTranslator.h"
 #include "utils/log.h"
-
-#include <cmath>
 
 using namespace KODI;
 using namespace GAME;
 
-CGameClientStreamAudio::CGameClientStreamAudio(IGameAudioCallback *audio, const game_stream_audio_properties &properties, double sampleRate) :
-  m_audio(audio),
-  m_format(properties.format),
-  m_sampleRate(sampleRate),
-  m_channelLayout(GetChannelLayout(properties.channel_map))
+CGameClientStreamAudio::CGameClientStreamAudio(double sampleRate) :
+  m_sampleRate(sampleRate)
 {
 }
 
-bool CGameClientStreamAudio::Open()
+bool CGameClientStreamAudio::OpenStream(RETRO::IRetroPlayerStream* stream, const game_stream_properties& properties)
 {
-  if (m_audio == nullptr)
-    return false;
-
-  const AEDataFormat pcmFormat = CGameClientTranslator::TranslatePCMFormat(m_format);
-  if (pcmFormat == AE_FMT_INVALID)
+  RETRO::CRetroPlayerAudio* audioStream = dynamic_cast<RETRO::CRetroPlayerAudio*>(stream);
+  if (audioStream == nullptr)
   {
-    CLog::Log(LOGERROR, "GAME: Unknown PCM format: %d", m_format);
+    CLog::Log(LOGERROR, "GAME: RetroPlayer stream is not an audio stream");
     return false;
   }
 
-  unsigned int sampleRate = std::round(m_sampleRate);
-  if (sampleRate == 0)
+  std::unique_ptr<RETRO::AudioStreamProperties> audioProperties(TranslateProperties(properties.audio, m_sampleRate));
+  if (audioProperties)
   {
-    CLog::Log(LOGERROR, "GAME: Invalid samplerate: %f", m_sampleRate);
-    return false;
+    if (audioStream->OpenStream(reinterpret_cast<const RETRO::StreamProperties&>(*audioProperties)))
+      m_stream = stream;
   }
 
-  CAEChannelInfo channelLayout;
-  for (GAME_AUDIO_CHANNEL gameChannel : m_channelLayout)
-  {
-    AEChannel channel = CGameClientTranslator::TranslateAudioChannel(gameChannel);
-    if (channel == AE_CH_NULL)
-    {
-      CLog::Log(LOGERROR, "GAME: Unknown channel ID: %d", gameChannel);
-      return false;
-    }
-    channelLayout += channel;
-  }
-
-  if (m_channelLayout.empty())
-  {
-    CLog::Log(LOGERROR, "GAME: Empty channel layout");
-    return false;
-  }
-
-  return m_audio->OpenStream(pcmFormat, sampleRate, channelLayout);
+  return m_stream != nullptr;
 }
 
-void CGameClientStreamAudio::Close()
+void CGameClientStreamAudio::CloseStream()
 {
-  if (m_audio != nullptr)
-    m_audio->CloseStream();
+  m_stream->CloseStream();
+  m_stream = nullptr;
 }
 
 void CGameClientStreamAudio::AddData(const game_stream_packet &packet)
@@ -89,20 +61,59 @@ void CGameClientStreamAudio::AddData(const game_stream_packet &packet)
   if (packet.type != GAME_STREAM_AUDIO)
     return;
 
-  const game_stream_audio_packet &audio = packet.audio;
+  if (m_stream != nullptr)
+  {
+    const game_stream_audio_packet &audio = packet.audio;
 
-  m_audio->AddData(audio.data, audio.size);
+    RETRO::AudioStreamPacket audioPacket{
+      audio.data,
+      audio.size
+    };
+
+    m_stream->AddStreamData(reinterpret_cast<RETRO::StreamPacket&>(audioPacket));
+  }
 }
 
-std::vector<GAME_AUDIO_CHANNEL> CGameClientStreamAudio::GetChannelLayout(const GAME_AUDIO_CHANNEL* channelMap)
+RETRO::AudioStreamProperties* CGameClientStreamAudio::TranslateProperties(const game_stream_audio_properties &properties, double sampleRate)
 {
-  std::vector<GAME_AUDIO_CHANNEL> channelLayout;
-
-  if (channelMap != nullptr)
+  const RETRO::PCMFormat pcmFormat = CGameClientTranslator::TranslatePCMFormat(properties.format);
+  if (pcmFormat == RETRO::PCMFormat::FMT_UNKNOWN)
   {
-    for (const GAME_AUDIO_CHANNEL* channelPtr = channelMap; *channelPtr != GAME_CH_NULL; channelPtr++)
-      channelLayout.push_back(*channelPtr);
+    CLog::Log(LOGERROR, "GAME: Unknown PCM format: %d", static_cast<int>(properties.format));
+    return nullptr;
   }
 
-  return channelLayout;
+  RETRO::AudioChannelMap channelMap = { { RETRO::AudioChannel::CH_NULL } };
+  unsigned int i = 0;
+  if (properties.channel_map != nullptr)
+  {
+    for (const GAME_AUDIO_CHANNEL* channelPtr = properties.channel_map;
+      *channelPtr != GAME_CH_NULL;
+      channelPtr++)
+    {
+      RETRO::AudioChannel channel = CGameClientTranslator::TranslateAudioChannel(*channelPtr);
+      if (channel == RETRO::AudioChannel::CH_NULL)
+      {
+        CLog::Log(LOGERROR, "GAME: Unknown channel ID: %d", static_cast<int>(*channelPtr));
+        return nullptr;
+      }
+
+      channelMap[i++] = channel;
+      if (i + 1 >= channelMap.size())
+        break;
+    }
+  }
+  channelMap[i] = RETRO::AudioChannel::CH_NULL;
+
+  if (channelMap[0] == RETRO::AudioChannel::CH_NULL)
+  {
+    CLog::Log(LOGERROR, "GAME: Empty channel layout");
+    return nullptr;
+  }
+
+  return new RETRO::AudioStreamProperties{
+    pcmFormat,
+    sampleRate,
+    channelMap
+  };
 }

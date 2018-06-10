@@ -19,7 +19,7 @@
  */
 
 #include "RPRendererGuiTexture.h"
-#include "cores/RetroPlayer/process/RenderBufferGuiTexture.h"
+#include "cores/RetroPlayer/buffers/video/RenderBufferGuiTexture.h"
 #include "cores/RetroPlayer/rendering/RenderContext.h"
 #include "cores/RetroPlayer/rendering/RenderVideoSettings.h"
 
@@ -50,15 +50,15 @@ RenderBufferPoolVector CRendererFactoryGuiTexture::CreateBufferPools(CRenderCont
 {
   return {
 #if !defined(HAS_DX)
-    std::make_shared<CRenderBufferPoolGuiTexture>(VS_SCALINGMETHOD_NEAREST),
+    std::make_shared<CRenderBufferPoolGuiTexture>(SCALINGMETHOD::NEAREST),
 #endif
-    std::make_shared<CRenderBufferPoolGuiTexture>(VS_SCALINGMETHOD_LINEAR),
+    std::make_shared<CRenderBufferPoolGuiTexture>(SCALINGMETHOD::LINEAR),
   };
 }
 
 // --- CRenderBufferPoolGuiTexture -----------------------------------------------
 
-CRenderBufferPoolGuiTexture::CRenderBufferPoolGuiTexture(ESCALINGMETHOD scalingMethod) :
+CRenderBufferPoolGuiTexture::CRenderBufferPoolGuiTexture(SCALINGMETHOD scalingMethod) :
   m_scalingMethod(scalingMethod)
 {
 }
@@ -66,6 +66,10 @@ CRenderBufferPoolGuiTexture::CRenderBufferPoolGuiTexture(ESCALINGMETHOD scalingM
 bool CRenderBufferPoolGuiTexture::IsCompatible(const CRenderVideoSettings &renderSettings) const
 {
   if (renderSettings.GetScalingMethod() != m_scalingMethod)
+    return false;
+
+  // Shaders not supported
+  if (!renderSettings.GetShaderPreset().empty())
     return false;
 
   return true;
@@ -83,15 +87,24 @@ CRPRendererGuiTexture::CRPRendererGuiTexture(const CRenderSettings &renderSettin
 {
 }
 
-bool CRPRendererGuiTexture::Supports(ERENDERFEATURE feature) const
+bool CRPRendererGuiTexture::Supports(RENDERFEATURE feature) const
 {
-  if (feature == RENDERFEATURE_STRETCH         ||
-      feature == RENDERFEATURE_ZOOM            ||
-      feature == RENDERFEATURE_PIXEL_RATIO     ||
-      feature == RENDERFEATURE_ROTATION)
+  if (feature == RENDERFEATURE::STRETCH         ||
+      feature == RENDERFEATURE::ZOOM            ||
+      feature == RENDERFEATURE::PIXEL_RATIO     ||
+      feature == RENDERFEATURE::ROTATION)
   {
     return true;
   }
+
+  return false;
+}
+
+bool CRPRendererGuiTexture::Supports(SCALINGMETHOD method) const
+{
+  if (method == SCALINGMETHOD::LINEAR ||
+      method == SCALINGMETHOD::NEAREST)
+    return true;
 
   return false;
 }

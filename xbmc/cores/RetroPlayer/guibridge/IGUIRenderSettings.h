@@ -34,6 +34,11 @@ namespace RETRO
     virtual ~IGUIRenderSettings() = default;
 
     /*!
+     * \brief Returns true if this render target has a shader preset set
+     */
+    virtual bool HasShaderPreset() const { return true; }
+
+    /*!
      * \brief Returns true if this render target has a scaling method set
      */
     virtual bool HasScalingMethod() const { return true; }
@@ -42,6 +47,11 @@ namespace RETRO
      * \brief Returns true if this render target has a view mode set
      */
     virtual bool HasViewMode() const { return true; }
+
+    /*!
+     * \brief Returns true if this render target has a video rotation set
+     */
+    virtual bool HasRotation() const { return true; }
 
     /*!
      * \brief Get the settings used to render this target

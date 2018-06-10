@@ -138,6 +138,8 @@ bool CWinSystemGbm::CreateNewWindow(const std::string& name,
     return false;
   }
 
+  m_bFullScreen = fullScreen;
+
   CLog::Log(LOGDEBUG, "CWinSystemGbm::%s - initialized GBM", __FUNCTION__);
   return true;
 }
@@ -154,9 +156,14 @@ void CWinSystemGbm::UpdateResolutions()
 {
   CWinSystemBase::UpdateResolutions();
 
-  std::vector<RESOLUTION_INFO> resolutions;
+  UpdateDesktopResolution(CDisplaySettings::GetInstance().GetResolutionInfo(RES_DESKTOP),
+                          0,
+                          m_DRM->m_mode->hdisplay,
+                          m_DRM->m_mode->vdisplay,
+                          m_DRM->m_mode->vrefresh);
 
-  if (!m_DRM->GetModes(resolutions) || resolutions.empty())
+  auto resolutions = m_DRM->GetModes();
+  if (resolutions.empty())
   {
     CLog::Log(LOGWARNING, "CWinSystemGbm::%s - Failed to get resolutions", __FUNCTION__);
   }
@@ -164,44 +171,19 @@ void CWinSystemGbm::UpdateResolutions()
   {
     CDisplaySettings::GetInstance().ClearCustomResolutions();
 
-    for (unsigned int i = 0; i < resolutions.size(); i++)
+    for (auto &res : resolutions)
     {
-      if(m_DRM->m_mode->hdisplay == resolutions[i].iWidth &&
-         m_DRM->m_mode->vdisplay == resolutions[i].iHeight &&
-         m_DRM->m_mode->vrefresh == resolutions[i].fRefreshRate &&
-         ((m_DRM->m_mode->flags ^ DRM_MODE_FLAG_INTERLACE) &&
-          (resolutions[i].dwFlags ^ D3DPRESENTFLAG_INTERLACED)))
-      {
-        CLog::Log(LOGNOTICE, "Found resolution %dx%d for display %d with %dx%d%s @ %f Hz setting to RES_DESKTOP at %d",
-                  resolutions[i].iWidth,
-                  resolutions[i].iHeight,
-                  resolutions[i].iScreen,
-                  resolutions[i].iScreenWidth,
-                  resolutions[i].iScreenHeight,
-                  resolutions[i].dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "",
-                  resolutions[i].fRefreshRate,
-                  (int)RES_DESKTOP);
+      CServiceBroker::GetWinSystem()->GetGfxContext().ResetOverscan(res);
+      CDisplaySettings::GetInstance().AddResolutionInfo(res);
 
-        UpdateDesktopResolution(CDisplaySettings::GetInstance().GetResolutionInfo(RES_DESKTOP),
-                                0,
-                                m_DRM->m_mode->hdisplay,
-                                m_DRM->m_mode->vdisplay,
-                                m_DRM->m_mode->vrefresh);
-      }
-      else
-      {
-        CLog::Log(LOGNOTICE, "Found resolution %dx%d for display %d with %dx%d%s @ %f Hz",
-                  resolutions[i].iWidth,
-                  resolutions[i].iHeight,
-                  resolutions[i].iScreen,
-                  resolutions[i].iScreenWidth,
-                  resolutions[i].iScreenHeight,
-                  resolutions[i].dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "",
-                  resolutions[i].fRefreshRate);
-
-        CServiceBroker::GetWinSystem()->GetGfxContext().ResetOverscan(resolutions[i]);
-        CDisplaySettings::GetInstance().AddResolutionInfo(resolutions[i]);
-      }
+      CLog::Log(LOGNOTICE, "Found resolution %dx%d for display %d with %dx%d%s @ %f Hz",
+                res.iWidth,
+                res.iHeight,
+                res.iScreen,
+                res.iScreenWidth,
+                res.iScreenHeight,
+                res.dwFlags & D3DPRESENTFLAG_INTERLACED ? "i" : "",
+                res.fRefreshRate);
     }
   }
 
@@ -232,7 +214,11 @@ bool CWinSystemGbm::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, bool bl
   }
 
   auto result = m_DRM->SetVideoMode(res, bo);
-  m_GBM->ReleaseBuffer();
+
+  if (!m_DRM->m_req)
+  {
+    m_GBM->ReleaseBuffer();
+  }
 
   int delay = CServiceBroker::GetSettings().GetInt("videoscreen.delayrefreshchange");
   if (delay > 0)

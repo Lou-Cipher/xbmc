@@ -40,12 +40,16 @@ public:
   ~CGUIGameControl() override;
 
   // GUI functions
+  void SetVideoFilter(const KODI::GUILIB::GUIINFO::CGUIInfoLabel &videoFilter);
   void SetScalingMethod(const KODI::GUILIB::GUIINFO::CGUIInfoLabel &scalingMethod);
   void SetViewMode(const KODI::GUILIB::GUIINFO::CGUIInfoLabel &viewMode);
+  void SetRotation(const KODI::GUILIB::GUIINFO::CGUIInfoLabel &rotation);
 
   // Rendering functions
+  bool HasShaderPreset() const { return m_bHasShaderPreset; }
   bool HasScalingMethod() const { return m_bHasScalingMethod; }
   bool HasViewMode() const { return m_bHasViewMode; }
+  bool HasRotation() const { return m_bHasRotation; }
   IGUIRenderSettings *GetRenderSettings() const;
 
   // implementation of CGUIControl
@@ -66,12 +70,16 @@ private:
   void UnregisterControl();
 
   // GUI properties
+  KODI::GUILIB::GUIINFO::CGUIInfoLabel m_videoFilterInfo;
   KODI::GUILIB::GUIINFO::CGUIInfoLabel m_scalingMethodInfo;
   KODI::GUILIB::GUIINFO::CGUIInfoLabel m_viewModeInfo;
+  KODI::GUILIB::GUIINFO::CGUIInfoLabel m_rotationInfo;
 
   // Rendering properties
+  bool m_bHasShaderPreset = false;
   bool m_bHasScalingMethod = false;
   bool m_bHasViewMode = false;
+  bool m_bHasRotation = false;
   std::unique_ptr<CGUIRenderSettings> m_renderSettings;
   std::shared_ptr<CGUIRenderHandle> m_renderHandle;
 };

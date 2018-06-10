@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include "cores/IPlayer.h"
 #include "../RPProcessInfo.h"
 
 namespace KODI

@@ -26,32 +26,36 @@
 
 namespace KODI
 {
+namespace RETRO
+{
+  class IRetroPlayerStream;
+  struct AudioStreamProperties;
+}
+
 namespace GAME
 {
-
-class IGameAudioCallback;
 
 class CGameClientStreamAudio : public IGameClientStream
 {
 public:
-  CGameClientStreamAudio(IGameAudioCallback *audio, const game_stream_audio_properties &properties, double sampleRate);
-  ~CGameClientStreamAudio() override { Close(); }
+  CGameClientStreamAudio(double sampleRate);
+  ~CGameClientStreamAudio() override = default;
 
   // Implementation of IGameClientStream
-  GAME_STREAM_TYPE Type() const override { return GAME_STREAM_AUDIO; }
-  bool Open() override;
-  void Close() override;
+  bool OpenStream(RETRO::IRetroPlayerStream* stream,
+                  const game_stream_properties& properties) override;
+  void CloseStream() override;
   void AddData(const game_stream_packet &packet) override;
 
 private:
   // Utility functions
-  static std::vector<GAME_AUDIO_CHANNEL> GetChannelLayout(const GAME_AUDIO_CHANNEL* channelMap);
+  static RETRO::AudioStreamProperties* TranslateProperties(const game_stream_audio_properties &properties, double sampleRate);
 
   // Construction parameters
-  IGameAudioCallback *const m_audio;
-  const GAME_PCM_FORMAT m_format;
-  const double m_sampleRate;
-  const std::vector<GAME_AUDIO_CHANNEL> m_channelLayout;
+  double m_sampleRate;
+
+  // Stream parameters
+  RETRO::IRetroPlayerStream* m_stream;
 };
 
 } // namespace GAME
