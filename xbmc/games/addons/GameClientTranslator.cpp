@@ -63,11 +63,6 @@ bool CGameClientTranslator::TranslateStreamType(GAME_STREAM_TYPE gameType, RETRO
 {
   switch (gameType)
   {
-<<<<<<< HEAD
-  case GAME_PIXEL_FORMAT_0RGB8888: return AV_PIX_FMT_0RGB32;
-  case GAME_PIXEL_FORMAT_RGB565:   return AV_PIX_FMT_RGB565;
-  case GAME_PIXEL_FORMAT_0RGB1555: return AV_PIX_FMT_RGB555;
-=======
   case GAME_STREAM_AUDIO:
     retroType = RETRO::StreamType::AUDIO;
     return true;
@@ -80,16 +75,12 @@ bool CGameClientTranslator::TranslateStreamType(GAME_STREAM_TYPE gameType, RETRO
   case GAME_STREAM_HW_FRAMEBUFFER:
     retroType = RETRO::StreamType::HW_BUFFER;
     return true;
->>>>>>> 8576e4cd3903bc12a8f51caa3bb66674d880709b
   default:
     break;
   }
   return false;
 }
 
-<<<<<<< HEAD
-AEDataFormat CGameClientTranslator::TranslatePCMFormat(GAME_PCM_FORMAT format)
-=======
 AVPixelFormat CGameClientTranslator::TranslatePixelFormat(GAME_PIXEL_FORMAT format)
 {
   switch (format)
@@ -104,7 +95,6 @@ AVPixelFormat CGameClientTranslator::TranslatePixelFormat(GAME_PIXEL_FORMAT form
 }
 
 RETRO::PCMFormat CGameClientTranslator::TranslatePCMFormat(GAME_PCM_FORMAT format)
->>>>>>> 8576e4cd3903bc12a8f51caa3bb66674d880709b
 {
   switch (format)
   {
@@ -145,8 +135,6 @@ RETRO::AudioChannel CGameClientTranslator::TranslateAudioChannel(GAME_AUDIO_CHAN
   return RETRO::AudioChannel::CH_NULL;
 }
 
-<<<<<<< HEAD
-=======
 RETRO::VideoRotation CGameClientTranslator::TranslateRotation(GAME_VIDEO_ROTATION rotation)
 {
   switch (rotation)
@@ -163,7 +151,6 @@ RETRO::VideoRotation CGameClientTranslator::TranslateRotation(GAME_VIDEO_ROTATIO
   return RETRO::VideoRotation::ROTATION_0;
 }
 
->>>>>>> 8576e4cd3903bc12a8f51caa3bb66674d880709b
 GAME_KEY_MOD CGameClientTranslator::GetModifiers(KEYBOARD::Modifier modifier)
 {
   using namespace KEYBOARD;
