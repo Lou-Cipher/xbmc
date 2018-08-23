@@ -25,16 +25,7 @@
 
 CBaseRenderer::CBaseRenderer()
 {
-  m_sourceFrameRatio = 1.0f;
-  m_sourceWidth = 720;
-  m_sourceHeight = 480;
-  m_fps = 0.0f;
-  m_renderOrientation = 0;
-  m_oldRenderOrientation = 0;
-  m_oldDestRect.SetRect(0.0f, 0.0f, 0.0f, 0.0f);
-  m_iFlags = 0;
-
-  for(int i=0; i < 4; i++)
+  for (int i=0; i < 4; i++)
   {
     m_rotatedDestCoords[i].x = 0;
     m_rotatedDestCoords[i].y = 0;
@@ -66,23 +57,8 @@ inline void CBaseRenderer::ReorderDrawPoints()
                          {m_destRect.x2, m_destRect.y1},
                          {m_destRect.x2, m_destRect.y2},
                          {m_destRect.x1, m_destRect.y2}};
-  bool changeAspect = false;
-  int pointOffset = 0;
 
-  switch (m_renderOrientation)
-  {
-    case 90:
-      pointOffset = 1;
-      changeAspect = true;
-      break;
-    case 180:
-      pointOffset = 2;
-      break;
-    case 270:
-      pointOffset = 3;
-      changeAspect = true;
-      break;
-  }
+  int pointOffset = m_renderOrientation / 90;
 
   // if renderer doesn't support rotation
   // treat orientation as 0 degree so that
@@ -90,53 +66,6 @@ inline void CBaseRenderer::ReorderDrawPoints()
   if (!Supports(RENDERFEATURE_ROTATION))
   {
     pointOffset = 0;
-    changeAspect = false;
-  }
-
-
-  float diffX = 0.0f;
-  float diffY = 0.0f;
-  float centerX = 0.0f;
-  float centerY = 0.0f;
-
-  if (changeAspect)// we are either rotating by 90 or 270 degrees which inverts aspect ratio
-  {
-    float newWidth = m_destRect.Height(); // new width is old height
-    float newHeight = m_destRect.Width(); // new height is old width
-    float diffWidth = newWidth - m_destRect.Width(); // difference between old and new width
-    float diffHeight = newHeight - m_destRect.Height(); // difference between old and new height
-
-    // if the new width is bigger then the old or
-    // the new height is bigger then the old - we need to scale down
-    if (diffWidth > 0.0f || diffHeight > 0.0f)
-    {
-      float aspectRatio = GetAspectRatio();
-      // scale to fit screen width because
-      // the difference in width is bigger then the
-      // difference in height
-      if (diffWidth > diffHeight)
-      {
-        newWidth = m_destRect.Width(); // clamp to the width of the old dest rect
-        newHeight *= aspectRatio;
-      }
-      else // scale to fit screen height
-      {
-        newHeight = m_destRect.Height(); // clamp to the height of the old dest rect
-        newWidth /= aspectRatio;
-      }
-    }
-
-    // calculate the center point of the view
-    centerX = m_viewRect.x1 + m_viewRect.Width() / 2.0f;
-    centerY = m_viewRect.y1 + m_viewRect.Height() / 2.0f;
-
-    // calculate the number of pixels we need to go in each
-    // x direction from the center point
-    diffX = newWidth / 2;
-    // calculate the number of pixels we need to go in each
-    // y direction from the center point
-    diffY = newHeight / 2;
-
   }
 
   for (int destIdx=0, srcIdx=pointOffset; destIdx < 4; destIdx++)
@@ -144,28 +73,6 @@ inline void CBaseRenderer::ReorderDrawPoints()
     m_rotatedDestCoords[destIdx].x = origMat[srcIdx][0];
     m_rotatedDestCoords[destIdx].y = origMat[srcIdx][1];
 
-    if (changeAspect)
-    {
-      switch (srcIdx)
-      {
-        case 0:// top left
-          m_rotatedDestCoords[destIdx].x = centerX - diffX;
-          m_rotatedDestCoords[destIdx].y = centerY - diffY;
-          break;
-        case 1:// top right
-          m_rotatedDestCoords[destIdx].x = centerX + diffX;
-          m_rotatedDestCoords[destIdx].y = centerY - diffY;
-          break;
-        case 2:// bottom right
-          m_rotatedDestCoords[destIdx].x = centerX + diffX;
-          m_rotatedDestCoords[destIdx].y = centerY + diffY;
-          break;
-        case 3:// bottom left
-          m_rotatedDestCoords[destIdx].x = centerX - diffX;
-          m_rotatedDestCoords[destIdx].y = centerY + diffY;
-          break;
-      }
-    }
     srcIdx++;
     srcIdx = srcIdx % 4;
   }
@@ -199,7 +106,7 @@ void CBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float wid
                                          float inputFrameRatio, float zoomAmount, float verticalShift)
 {
   // if view window is empty, set empty destination
-  if(height == 0 || width == 0)
+  if (height == 0 || width == 0)
   {
     m_destRect.SetRect(0.0f, 0.0f, 0.0f, 0.0f);
     return;
@@ -214,20 +121,43 @@ void CBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float wid
 
   // allow a certain error to maximize size of render area
   float fCorrection = width / height / outputFrameRatio - 1.0f;
-  float fAllowed    = CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_ERRORINASPECT) * 0.01f;
-  if(fCorrection >   fAllowed) fCorrection =   fAllowed;
-  if(fCorrection < - fAllowed) fCorrection = - fAllowed;
+  float fAllowed = CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_ERRORINASPECT) * 0.01f;
+  if (fCorrection > fAllowed)
+    fCorrection = fAllowed;
+  if (fCorrection < -fAllowed)
+    fCorrection = - fAllowed;
 
   outputFrameRatio *= 1.0f + fCorrection;
 
-  // maximize the movie width
-  float newWidth = width;
-  float newHeight = newWidth / outputFrameRatio;
+  bool isRotated = false;
+  if (m_renderOrientation == 90 ||
+      m_renderOrientation == 270)
+    isRotated = true;
 
-  if (newHeight > height)
+  float newWidth;
+  float newHeight;
+
+  if (!isRotated)
   {
-    newHeight = height;
-    newWidth = newHeight * outputFrameRatio;
+    // maximize the movie width
+    newWidth = width;
+    newHeight = newWidth / outputFrameRatio;
+    if (newHeight > height)
+    {
+      newHeight = height;
+      newWidth = newHeight * outputFrameRatio;
+    }
+  }
+  else
+  {
+    // maximize the movie hight
+    newHeight = std::min(width, height);
+    newWidth = newHeight / outputFrameRatio;
+    if (newWidth > width)
+    {
+      newWidth = std::min(width, height);
+      newHeight = newWidth * outputFrameRatio;
+    }
   }
 
   // Scale the movie up by set zoom amount
@@ -279,14 +209,7 @@ void CBaseRenderer::CalcNormalRenderRect(float offsetX, float offsetY, float wid
     }
   }
 
-  if (m_oldDestRect != m_destRect || m_oldRenderOrientation != m_renderOrientation)
-  {
-    // adapt the drawing rect points if we have to rotate
-    // and either destrect or orientation changed
-    ReorderDrawPoints();
-    m_oldDestRect = m_destRect;
-    m_oldRenderOrientation = m_renderOrientation;
-  }
+  ReorderDrawPoints();
 }
 
 //***************************************************************************************
@@ -394,7 +317,10 @@ void CBaseRenderer::ManageRenderArea()
       break;
   }
 
-  CalcNormalRenderRect(m_viewRect.x1, m_viewRect.y1, m_viewRect.Width(), m_viewRect.Height(), GetAspectRatio() * CDisplaySettings::GetInstance().GetPixelRatio(), CDisplaySettings::GetInstance().GetZoomAmount(), CDisplaySettings::GetInstance().GetVerticalShift());
+  CalcNormalRenderRect(m_viewRect.x1, m_viewRect.y1, m_viewRect.Width(), m_viewRect.Height(),
+                       GetAspectRatio() * CDisplaySettings::GetInstance().GetPixelRatio(),
+                       CDisplaySettings::GetInstance().GetZoomAmount(),
+                       CDisplaySettings::GetInstance().GetVerticalShift());
 }
 
 EShaderFormat CBaseRenderer::GetShaderFormat()
@@ -433,7 +359,6 @@ void CBaseRenderer::SetViewMode(int viewMode)
   m_videoSettings.m_ViewMode = viewMode;
 
   // get our calibrated full screen resolution
-  RESOLUTION res = CServiceBroker::GetWinSystem()->GetGfxContext().GetVideoResolution();
   RESOLUTION_INFO info = CServiceBroker::GetWinSystem()->GetGfxContext().GetResInfo();
   float screenWidth  = (float)(info.Overscan.right  - info.Overscan.left);
   float screenHeight = (float)(info.Overscan.bottom - info.Overscan.top);
@@ -474,17 +399,9 @@ void CBaseRenderer::SetViewMode(int viewMode)
   else if (m_videoSettings.m_ViewMode == ViewModeStretch4x3)
   { // stretch image to 4:3 ratio
     CDisplaySettings::GetInstance().SetZoomAmount(1.0);
-    if (res == RES_PAL_4x3 || res == RES_PAL60_4x3 || res == RES_NTSC_4x3 || res == RES_HDTV_480p_4x3)
-    { // stretch to the limits of the 4:3 screen.
-      // incorrect behaviour, but it's what the users want, so...
-      CDisplaySettings::GetInstance().SetPixelRatio((screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio);
-    }
-    else
-    {
-      // now we need to set CDisplaySettings::GetInstance().GetPixelRatio() so that
-      // fOutputFrameRatio = 4:3.
-      CDisplaySettings::GetInstance().SetPixelRatio((4.0f / 3.0f) / sourceFrameRatio);
-    }
+    // now we need to set CDisplaySettings::GetInstance().GetPixelRatio() so that
+    // fOutputFrameRatio = 4:3.
+    CDisplaySettings::GetInstance().SetPixelRatio((4.0f / 3.0f) / sourceFrameRatio);
   }
   else if (m_videoSettings.m_ViewMode == ViewModeWideZoom ||
            (is43 && CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_STRETCH43) == ViewModeWideZoom))
@@ -500,16 +417,9 @@ void CBaseRenderer::SetViewMode(int viewMode)
                      CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_STRETCH43) == ViewModeStretch16x9Nonlin)))
   { // stretch image to 16:9 ratio
     CDisplaySettings::GetInstance().SetZoomAmount(1.0);
-    if (res == RES_PAL_4x3 || res == RES_PAL60_4x3 || res == RES_NTSC_4x3 || res == RES_HDTV_480p_4x3)
-    { // now we need to set CDisplaySettings::GetInstance().GetPixelRatio() so that
-      // outputFrameRatio = 16:9.
-      CDisplaySettings::GetInstance().SetPixelRatio((16.0f / 9.0f) / sourceFrameRatio);
-    }
-    else
-    { // stretch to the limits of the 16:9 screen.
-      // incorrect behaviour, but it's what the users want, so...
-      CDisplaySettings::GetInstance().SetPixelRatio((screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio);
-    }
+    // stretch to the limits of the 16:9 screen.
+    // incorrect behaviour, but it's what the users want, so...
+    CDisplaySettings::GetInstance().SetPixelRatio((screenWidth / screenHeight) * info.fPixelRatio / sourceFrameRatio);
     bool nonlin = (is43 && CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_STRETCH43) == ViewModeStretch16x9Nonlin) ||
                   m_videoSettings.m_ViewMode == ViewModeStretch16x9Nonlin;
     CDisplaySettings::GetInstance().SetNonLinearStretched(nonlin);

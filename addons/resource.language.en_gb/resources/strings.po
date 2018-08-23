@@ -20940,6 +20940,7 @@ msgstr ""
 
 #. Label for an option to select the video stream to play if current video has more than one video stream
 #: xbmc/video/dialogs/GUIDialogVideoSettings.cpp
+#: xbmc/video/PlayerController.cpp
 msgctxt "#38031"
 msgid "Video stream"
 msgstr ""
@@ -21604,12 +21605,14 @@ msgstr ""
 
 #. audio/video/subtitle flag - FLAG_HEARING_IMPAIRED
 #: xbmc/video/dialogs/GUIDialogAudioSubtitleSettings.cpp
+#: xbmc/video/dialogs/GUIDialogVideoSettings.cpp
 msgctxt "#39107"
 msgid "captions"
 msgstr ""
 
 #. audio/video/subtitle flag - FLAG_VISUAL_IMPAIRED
 #: xbmc/video/dialogs/GUIDialogAudioSubtitleSettings.cpp
+#: xbmc/video/dialogs/GUIDialogVideoSettings.cpp
 msgctxt "#39108"
 msgid "audio description"
 msgstr ""

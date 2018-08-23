@@ -58,6 +58,7 @@ if(UNIX)
   option(ENABLE_INTERNAL_RapidJSON "Enable internal rapidjson?" OFF)
   option(ENABLE_INTERNAL_FMT "Enable internal fmt?" OFF)
   option(ENABLE_INTERNAL_FSTRCMP "Enable internal fstrcmp?" OFF)
+  option(ENABLE_INTERNAL_FLATBUFFERS "Enable internal flatbuffers?" OFF)
 endif()
 # System options
 if(NOT WIN32)
