@@ -9,6 +9,7 @@
 #pragma once
 
 #include "addons/kodi-addon-dev-kit/include/kodi/addon-instance/PeripheralUtils.h"
+#include "threads/CriticalSection.h"
 
 #include <string>
 #include <utility>
@@ -23,12 +24,12 @@ namespace PERIPHERALS
   {
   public:
     CAndroidJoystickState();
+    CAndroidJoystickState(CAndroidJoystickState &&other);
     virtual ~CAndroidJoystickState();
 
     int GetDeviceId() const { return m_deviceId; }
 
     unsigned int GetButtonCount() const { return static_cast<unsigned int>(m_buttons.size()); }
-    unsigned int GetHatCount() const { return static_cast<unsigned int>(m_hats.size()); }
     unsigned int GetAxisCount() const { return static_cast<unsigned int>(m_axes.size()); }
 
     /*!
@@ -51,30 +52,18 @@ namespace PERIPHERALS
     /*!
      * Get events that have occurred since the last call to GetEvents()
      */
-    void GetEvents(std::vector<kodi::addon::PeripheralEvent>& events) const;
+    void GetEvents(std::vector<kodi::addon::PeripheralEvent>& events);
 
   private:
     bool SetButtonValue(int axisId, JOYSTICK_STATE_BUTTON buttonValue);
-    bool SetHatValue(const std::vector<int>& axisIds, JOYSTICK_STATE_HAT hatValue);
     bool SetAxisValue(const std::vector<int>& axisIds, JOYSTICK_STATE_AXIS axisValue);
 
-    void GetButtonEvents(std::vector<kodi::addon::PeripheralEvent>& events) const;
-    void GetHatEvents(std::vector<kodi::addon::PeripheralEvent>& events) const;
+    void GetButtonEvents(std::vector<kodi::addon::PeripheralEvent>& events);
     void GetAxisEvents(std::vector<kodi::addon::PeripheralEvent>& events) const;
-
-    static float Contain(float value, float min, float max);
-    static float Scale(float value, float max, float scaledMax);
-    static float Deadzone(float value, float deadzone);
 
     struct JoystickAxis
     {
       std::vector<int> ids;
-      float flat;
-      float fuzz;
-      float min;
-      float max;
-      float range;
-      float resolution;
     };
 
     using JoystickAxes = std::vector<JoystickAxis>;
@@ -83,20 +72,14 @@ namespace PERIPHERALS
     static bool ContainsAxis(int axisId, const JoystickAxes& axes);
     static bool GetAxesIndex(const std::vector<int>& axisIds, const JoystickAxes& axes, size_t& axesIndex);
 
-    struct JoystickState
-    {
-      std::vector<JOYSTICK_STATE_BUTTON> buttons;
-      std::vector<JOYSTICK_STATE_HAT> hats;
-      std::vector<JOYSTICK_STATE_AXIS> axes;
-    };
-
     int m_deviceId;
 
     JoystickAxes m_buttons;
-    JoystickAxes m_hats;
     JoystickAxes m_axes;
 
-    mutable JoystickState m_state;
-    JoystickState m_stateBuffer;
+    std::vector<JOYSTICK_STATE_AXIS> m_analogState;
+
+    CCriticalSection m_eventMutex;
+    std::vector<kodi::addon::PeripheralEvent> m_digitalEvents;
   };
 }
