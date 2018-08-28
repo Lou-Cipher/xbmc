@@ -200,15 +200,6 @@ bool CAndroidJoystickState::ProcessEvent(const AInputEvent* event)
 
       bool result = SetButtonValue(keycode, buttonState);
 
-      /*! @todo
-      // check if the key event belongs to the D-Pad which needs to be ignored
-      // if we handle the D-Pad as a hat
-      if (!result &&
-         (keycode == AKEYCODE_DPAD_UP || keycode == AKEYCODE_DPAD_DOWN || keycode == AKEYCODE_DPAD_LEFT || keycode == AKEYCODE_DPAD_RIGHT) &&
-         !m_hats.empty())
-        return true;
-      */
-
       return result;
     }
 
@@ -304,6 +295,15 @@ bool CAndroidJoystickState::SetAxisValue(const std::vector<int>& axisIds, JOYSTI
   size_t axisIndex = 0;
   if (!GetAxesIndex(axisIds, m_axes, axisIndex) || axisIndex >= GetAxisCount())
     return false;
+
+  const JoystickAxis& axis = m_axes[axisIndex];
+
+  // make sure that the axis value is in the valid range
+  axisValue = Contain(axisValue, axis.min, axis.max);
+  // apply deadzoning
+  axisValue = Deadzone(axisValue, axis.flat);
+  // scale the axis value down to a value between -1.0f and 1.0f
+  axisValue = Scale(axisValue, axis.max, 1.0f);
 
   m_analogState[axisIndex] = axisValue;
   return true;
